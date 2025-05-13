@@ -1,0 +1,10 @@
+langchain
+openai
+pdfplumber
+google-search-results
+#serpapi
+beautifulsoup4
+selenium
+webdriver-manager
+streamlit
+python-dotenv
