@@ -1,98 +1,112 @@
 # utils/outreach.py
+import random
+import logging
+from .guardrail import refine_outreach_message 
 
-from dotenv import load_dotenv
-load_dotenv()
+logger = logging.getLogger(__name__)
 
-import json
-from langchain_community.llms import OpenAI
-from utils.database import save_stage
-from utils.judge import judge_message
-
-
-def generate_outreach(lead: dict):
+def _generate_initial_draft_for_single_lead(lead_dict: dict, event_name: str = "ISA Sign Expo 2025") -> str:
     """
-    1. Generate an initial outreach message (email or LinkedIn DM).
-    2. Use the Judge agent to validate for hallucinations, toxicity, or trailing issues.
-    3. If issues are found, prompt the LLM to revise the message to correct them.
-    4. Return a dict with 'original', 'revised', and 'issues'.
-    5. Snapshot the revised message to db/outreach.csv.
+    Generates a basic initial draft outreach message for a single lead dictionary.
+    This draft will be passed to the guardrail LLM for refinement.
     """
-    llm = OpenAI(temperature=0.7)
-    dms = lead.get("decision_makers", []) or []
+    company_name = lead_dict.get("name", "your company")
+    # The description might still contain "My Planner..." or other noise if search.py didn't fully clean it.
+    # The guardrail prompt is designed to handle this.
+    description = lead_dict.get("description", "their interesting work at the event") 
+    
+    # Provide a simple, information-rich draft.
+    # The guardrail LLM will be instructed to rephrase the opening (e.g., "It was a pleasure...")
+    # and to use the description contextually.
+    initial_draft_body = (
+        f"Our team was particularly interested in {company_name} during {event_name}, "
+        f"especially regarding their work related to '{description[:150].strip().rstrip('.')}...'. "
+        f"We believe there could be strong potential for collaboration."
+    )
+    return initial_draft_body
 
-    # Determine contact and medium
-    if dms and isinstance(dms[0], dict) and dms[0].get("profile", "").startswith("https://linkedin.com"):
-        medium = "linkedin_dm"
-        contact = dms[0]["profile"]
-        prompt = (
-            f"Write a 300-character LinkedIn DM to {contact} at {lead['name']}. "
-            "Keep it brief, friendly, and include a call to action for a quick call."
+def generate_outreach_messages(leads_list: list, user_signature: str, event_name: str = "ISA Sign Expo 2025") -> list:
+    """
+    Takes a list of lead dictionaries, generates an initial draft message,
+    refines it using a guardrail LLM, and adds the final outreach_message to each.
+    This is the function that should be called from enrichment.py.
+    """
+    if not isinstance(leads_list, list):
+        logger.error("generate_outreach_messages expects a list of leads. Received: %s", type(leads_list))
+        return [] # Return empty list or raise error
+
+    updated_leads = []
+    for lead_item in leads_list:
+        if not isinstance(lead_item, dict):
+            logger.warning(f"Item in leads_list is not a dictionary, skipping: {type(lead_item)}")
+            # updated_leads.append(lead_item) # Optionally pass through non-dict items
+            continue
+        
+        lead_copy = lead_item.copy()
+        
+        company_name_for_refinement = lead_copy.get("name", "the company")
+        description_for_refinement = lead_copy.get("description", "their work")
+
+        initial_draft = _generate_initial_draft_for_single_lead(lead_copy, event_name)
+        
+        # Call the guardrail to refine this initial draft.
+        refined_body = refine_outreach_message(
+            original_message=initial_draft,
+            company_name=company_name_for_refinement,
+            company_description=description_for_refinement,
+            event_name=event_name
         )
-    else:
-        medium = "email"
-        contact_info = dms[0]['profile'] if dms and isinstance(dms[0], dict) else ""
-        prompt = (
-            f"Draft a concise outreach email to {lead['name']} (contact: {contact_info}). "
-            f"Company description: {lead.get('description', '')}. "
-            "Return JSON with keys 'subject' and 'body'."
-        )
+        
+        # Append the user's signature to the refined body
+        lead_copy["outreach_message"] = f"{refined_body}{user_signature}"
+        updated_leads.append(lead_copy)
+        
+    return updated_leads
 
-    # 1) Generate original message
-    resp = llm(prompt)
-    try:
-        original = json.loads(resp)
-    except Exception:
-        original = {
-            "medium": medium,
-            "subject": f"Collaboration with {lead['name']}",
-            "body": resp
-        }
-    # Ensure medium in original
-    original["medium"] = medium
+# Renamed the main function that enrichment.py calls to be more descriptive
+# If your enrichment.py still calls `generate_outreach`, you can rename this function
+# back to `generate_outreach` or update the call in enrichment.py
+# For clarity with the previous conversation, I'll keep it as `generate_outreach`
+# to match what enrichment.py was likely calling.
 
-    # 2) Validate via Judge
-    issues = judge_message(original)
-
-    # 3) Revise if issues found
-    revised = original
-    if issues.strip().upper() != 'OK':
-        rev_prompt = (
-            "The following outreach message has issues: " + issues +
-            " Please revise it to correct any hallucinations, improve closure, "
-            "and ensure it ends with a clear call to action. "
-            "Respond in JSON with 'subject' and 'body'." +
-            "\nOriginal Message:\n" + json.dumps(original)
-        )
-        rev_resp = llm(rev_prompt)
-        try:
-            new_msg = json.loads(rev_resp)
-            revised = new_msg
-        except Exception:
-            revised = {"medium": medium, "subject": original.get("subject", ""), "body": rev_resp}
-        revised["medium"] = medium
-
-    # 4) Snapshot revised message
-    save_stage([revised], "outreach")
-
-    # 5) Return both versions and the judge report
-    return {"original": original, "revised": revised, "issues": issues}
+def generate_outreach(leads_list: list, user_signature: str, event_name: str = "ISA Sign Expo 2025") -> list:
+    return generate_outreach_messages(leads_list, user_signature, event_name)
 
 
 if __name__ == "__main__":
-    # Quick smoke test for outreach + judge + revision
-    import pandas as pd
-    import os
+    # This section is for direct testing of outreach.py
+    # You'll need to have a utils/guardrail.py with a mock or real refine_outreach_message for this test to run.
+    # For now, let's create a mock guardrail for testing purposes if utils.guardrail doesn't exist
+    try:
+        from .guardrail import refine_outreach_message
+    except ImportError:
+        print("WARNING: utils.guardrail.refine_outreach_message not found. Using a mock for testing outreach.py.")
+        def refine_outreach_message(original_message, company_name, company_description, event_name):
+            # Mock refinement: just appends "(refined)" and uses a standard opening
+            return f"It was a pleasure to learn about {company_name} regarding {event_name}.\n{original_message} (mock refined)"
 
-    path = os.path.join("db", "enriched.csv")
-    if not os.path.exists(path):
-        print("Run enrichment stage first. db/enriched.csv not found.")
-    else:
-        leads = pd.read_csv(path).to_dict(orient="records")
-        # Filter actionable only
-        actionable = [l for l in leads if l.get("actionable") == "Yes"]
-        if not actionable:
-            print("No actionable leads to test.")
-        else:
-            test_lead = actionable[0]
-            result = generate_outreach(test_lead)
-            print(json.dumps(result, indent=2))
+    print("--- Testing outreach.py ---")
+    dummy_sig = "\n\nBest regards,\nTest User\nTest Corp"
+    
+    dummy_leads_data = [
+        {"name": "Alpha Signs", "description": "Cutting-edge digital billboards and displays.", "raw_contacts_text": "Sarah VP, Sales Director John"},
+        {"name": "Beta Wraps", "description": "Custom vehicle wraps and fleet graphics. My Planner My Profile", "raw_contacts_text": "Mike (Technician)"},
+        {"name": "Gamma Prints", "description": "Large format printing services for events."}, # No raw_contacts_text
+        {"name": "Delta Corp", "description": "function parseIt() { return 'bad stuff'; }", "raw_contacts_text": "Hacker"}
+    ]
+    
+    # Add a non-dict item to test robustness
+    dummy_leads_data_with_error = dummy_leads_data + ["This is not a dict", None]
+    
+    leads_with_messages = generate_outreach(dummy_leads_data_with_error, dummy_sig, event_name="Test Expo 2024")
+    
+    print(f"\nProcessed {len(leads_with_messages)} leads/items:")
+    for i, lead in enumerate(leads_with_messages):
+      if isinstance(lead, dict):
+        print(f"\n--- Lead {i+1}: {lead.get('name')} ---")
+        print(f"Original Description: {lead.get('description')}")
+        print(f"Outreach Message:\n{lead.get('outreach_message')}")
+      else:
+        print(f"\n--- Skipped Non-Dict Item {i+1} ---")
+        print(lead)
+    print("-" * 30)

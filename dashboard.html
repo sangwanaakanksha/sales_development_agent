@@ -1,0 +1,82 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Outreach Dashboard</title>
+<style>
+  body {font-family: Arial, sans-serif; margin:20px;}
+  .wrapper {display:flex;}
+  .left {width:50%; padding-right:20px;}
+  .right {width:50%; padding-left:20px; border-left:1px solid #ddd;}
+  table {width:100%; border-collapse:collapse;}
+  th, td {border:1px solid #ccc; padding:8px; text-align:left;}
+  th {background:#f5f5f5;}
+  h2 {margin-top:0;}
+  input, textarea, select {width:100%; margin-top:8px; font-size:14px; padding:6px; box-sizing:border-box;}
+  textarea {height:200px;}
+</style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="left">
+      <h2>Actionable Leads</h2>
+      <table>
+        <thead><tr>
+          <th>Company</th><th>Location</th><th>Description</th><th>Contact</th><th>LinkedIn</th>
+        </tr></thead>
+        <tbody>
+        
+          <tr>
+            <td>3M Commercial Solutions</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td><a href="" target="_blank">Profile</a></td>
+          </tr>
+        
+          <tr>
+            <td>Avery Dennison Graphics Solutions</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td><a href="" target="_blank">Profile</a></td>
+          </tr>
+        
+          <tr>
+            <td>Gemini Inc</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td><a href="" target="_blank">Profile</a></td>
+          </tr>
+        
+        </tbody>
+      </table>
+    </div>
+    <div class="right">
+      <h2>Outreach Message</h2>
+      <select id="lead-select">
+        
+          <option value="0" selected>3M Commercial Solutions</option>
+        
+          <option value="1" >Avery Dennison Graphics Solutions</option>
+        
+          <option value="2" >Gemini Inc</option>
+        
+      </select>
+      <input type="text" id="subject" value="">
+      <textarea id="body"></textarea>
+    </div>
+  </div>
+  <script>
+    const data = [{"subject": "", "body": ""}, {"subject": "", "body": ""}, {"subject": "", "body": ""}];
+    const select = document.getElementById('lead-select');
+    const subj = document.getElementById('subject');
+    const body = document.getElementById('body');
+    select.addEventListener('change', () => {
+      const idx = select.value;
+      subj.value = data[idx].subject;
+      body.value = data[idx].body;
+    });
+  </script>
+</body>
+</html>

@@ -1,122 +1,167 @@
+# app.py
+
 import streamlit as st
 import pandas as pd
 import os
 
-from utils.outreach import generate_outreach
-from utils.judge import judge_message
+# Page Configuration (set this first)
+st.set_page_config(page_title="AI SDR Dashboard", layout="wide")
 
-# Page config
-st.set_page_config(layout="wide", page_title="Sales Outreach UI")
+st.title("📊 AI Sales Development Dashboard")
 
-# Custom CSS for tags and fonts
-st.markdown(
-    """
-    <style>
-    .title {font-size:32px; font-weight:bold; margin-bottom:20px;}
-    .subheader {font-size:20px; font-weight:500; margin-top:10px; margin-bottom:10px;}
-    .tag {display:inline-block; background-color:#E0F7FA; color:#00796B; padding:4px 8px; border-radius:4px; font-size:12px; margin-right:4px;}
-    .send-btn {background-color:#00796B; color:white; font-weight:bold; width:100%; padding:8px;}
-    </style>
-    """, unsafe_allow_html=True)
+# Load the final outreach file
+FILE_PATH = "db/master_outreach.csv"
+if not os.path.exists(FILE_PATH):
+    st.warning(f"Sales data file not found at {FILE_PATH}. Please run the main pipeline first: `python run.py`")
+    st.stop() # Stop execution if file doesn't exist
 
-st.markdown('<div class="title">Sales Outreach Assistant</div>', unsafe_allow_html=True)
+try:
+    df = pd.read_csv(FILE_PATH)
+except pd.errors.EmptyDataError:
+    st.error(f"The file {FILE_PATH} is empty. No leads to display.")
+    st.stop()
+except Exception as e:
+    st.error(f"Error loading {FILE_PATH}: {e}")
+    st.stop()
 
-@st.cache_data
-def load_data():
-    enriched_path = os.path.join("db", "enriched.csv")
-    df_e = pd.read_csv(enriched_path) if os.path.exists(enriched_path) else pd.DataFrame()
-    return df_e
+if df.empty:
+    st.info("The sales data file is empty. No leads to display.")
+    st.stop()
 
-df_enriched = load_data()
+# --- Column Renaming ---
+# Keys are original names from CSV, values are display names
+columns_rename = {
+    "name": "Company",
+    "company_website": "Website URL", # Assuming this is the actual col name in CSV for website
+    "mapyourshow_detail_url": "Event Profile URL", # If you want to show this
+    "description": "Company Description",
+    "location": "Location",
+    "size": "Company Size",
+    "revenue": "Est. Revenue",
+    "industry": "Industry",
+    "qualified": "ICP Qualified",
+    "actionable": "Actionable Lead",
+    "outreach_message": "Suggested Outreach", # Renaming for display
+    "Status": "Status", # If 'Status' is already the name, this won't change it but ensures consistency
+    "phone": "Phone",
+    "email": "Email",
+    "linkedin_company_page": "LinkedIn Page",
+    "booth_number": "Booth #"
+}
+# Only rename columns that actually exist in the DataFrame to avoid errors
+existing_columns_to_rename = {k: v for k, v in columns_rename.items() if k in df.columns}
+df.rename(columns=existing_columns_to_rename, inplace=True)
 
-# Create placeholders for message data
-if 'message_data' not in st.session_state:
-    st.session_state['message_data'] = None
+# --- Define columns for display and their order ---
+# Prioritize based on importance and data availability
+# Check your CSV for the exact column names after the renaming step above
+base_display_columns = [
+    "Company", "Status", "ICP Qualified", "Actionable Lead", "Suggested Outreach"
+]
+detailed_info_columns = [
+    "Company Description", "Location", "Website URL", "Event Profile URL",
+    "LinkedIn Page", "Phone", "Email", "Booth #",
+    "Company Size", "Est. Revenue", "Industry" # These might be sparse
+]
 
-col1, col2, col3 = st.columns([1, 2, 2])
+# Filter out columns that don't exist in the df from desired lists
+final_display_columns = [col for col in base_display_columns if col in df.columns]
+final_display_columns.extend([col for col in detailed_info_columns if col in df.columns and col not in final_display_columns])
 
-# ---- LEFT PANEL ----
-with col1:
-    st.markdown('<div class="subheader">Filters & Input</div>', unsafe_allow_html=True)
-    # Filter sliders
-    if not df_enriched.empty:
-        # Revenue filter
-        if 'revenue' in df_enriched:
-            min_r, max_r = int(df_enriched['revenue'].min()), int(df_enriched['revenue'].max())
-            rmin, rmax = st.slider("Revenue range", min_r, max_r, (min_r, max_r))
-        else:
-            rmin = rmax = None
-        # Employee size filter
-        if 'size' in df_enriched:
-            min_s, max_s = int(df_enriched['size'].min()), int(df_enriched['size'].max())
-            smin, smax = st.slider("Employee size", min_s, max_s, (min_s, max_s))
-        else:
-            smin = smax = None
-        # Apply filters
-        df_filtered = df_enriched.copy()
-        if rmin is not None:
-            df_filtered = df_filtered[(df_filtered['revenue']>=rmin)&(df_filtered['revenue']<=rmax)]
-        if smin is not None:
-            df_filtered = df_filtered[(df_filtered['size']>=smin)&(df_filtered['size']<=smax)]
+# --- Sidebar for Filters ---
+st.sidebar.header("Lead Filters")
+
+# Filter by status
+if "Status" in df.columns:
+    statuses_in_data = sorted(df["Status"].dropna().unique().tolist())
+    if not statuses_in_data:
+        st.sidebar.warning("No statuses available for filtering.")
+        selected_statuses = []
     else:
-        df_filtered = pd.DataFrame()
-
-    st.markdown("<br><div style='text-align:center;'>— OR —</div><br>", unsafe_allow_html=True)
-    uploaded_file = st.file_uploader("Upload PDF for extraction", type=["pdf"])
-    if uploaded_file:
-        st.info("Upload detected. Run backend to process and refresh leads.")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    # User details
-    user_name = st.text_input("Your Name", value="Sales Rep")
-    org_name = st.text_input("Your Organization", value="DuPont Tedlar")
-
-# ---- CENTER PANEL ----
-with col2:
-    st.markdown('<div class="subheader">Actionable Leads</div>', unsafe_allow_html=True)
-    # Only actionable leads
-    if not df_filtered.empty:
-        df_action = df_filtered[df_filtered['actionable']=='Yes']
+        default_statuses = [s for s in ["actionable", "qualified"] if s in statuses_in_data]
+        selected_statuses = st.sidebar.multiselect(
+            "Filter by Lead Status:",
+            options=statuses_in_data,
+            default=default_statuses
+        )
+    if selected_statuses:
+        df_filtered = df[df["Status"].isin(selected_statuses)]
     else:
-        df_action = pd.DataFrame()
+        df_filtered = df # Show all if no status selected or status column is problematic
+else:
+    st.sidebar.warning("'Status' column not found. Displaying all leads.")
+    df_filtered = df
 
-    if not df_action.empty:
-        options = []
-        for idx, row in df_action.iterrows():
-            tags = []
-            if row['qualified']=='Yes': tags.append('Qualified')
-            if row['actionable']=='Yes': tags.append('Actionable')
-            display = "".join([f"<span class='tag'>{t}</span>" for t in tags]) + f" {row['name']}"
-            options.append((display, idx))
-        # Single-select dropdown
-        sel_display, sel_idx = st.selectbox("Select a lead:", options, format_func=lambda x: x[0])
-        selected_lead = df_action.loc[sel_idx]
-    else:
-        st.write("No actionable leads. Adjust filters or upload data.")
-        selected_lead = None
+# --- Main Dashboard Display ---
+st.subheader("Sales Outreach Intelligence")
 
-# ---- RIGHT PANEL ----
-with col3:
-    st.markdown('<div class="subheader">Outreach Message Composer</div>', unsafe_allow_html=True)
-    sender_email = st.text_input("Your Email Address", value="user@company.com")
+if not df_filtered.empty:
+    # To make text in cells wrap and control column width/font, we can use st.data_editor
+    # or inject some CSS. For simplicity, st.dataframe has limited direct styling.
+    # For medium font and better visibility, Streamlit's default theme is usually quite good.
+    # We can ensure text wrapping for outreach messages by setting column widths.
+    
+    # Create a column configuration dictionary for st.data_editor or st.dataframe
+    column_config = {}
+    if "Suggested Outreach" in final_display_columns:
+        column_config["Suggested Outreach"] = st.column_config.TextColumn(
+            "Suggested Outreach",
+            help="AI-generated outreach message suggestion.",
+            # width="large" # You can try 'small', 'medium', 'large' or specific pixel width
+        )
+    if "Company Description" in final_display_columns:
+         column_config["Company Description"] = st.column_config.TextColumn(
+            "Company Description",
+            # width="medium"
+        )
+    if "Website URL" in final_display_columns:
+        column_config["Website URL"] = st.column_config.LinkColumn(
+            "Website URL",
+            display_text="Visit 🔗" # Or use a regex to display the domain
+        )
+    if "Event Profile URL" in final_display_columns:
+        column_config["Event Profile URL"] = st.column_config.LinkColumn(
+            "Event Profile URL",
+            display_text="Event Page 🔗"
+        )
+    if "LinkedIn Page" in final_display_columns:
+        column_config["LinkedIn Page"] = st.column_config.LinkColumn(
+            "LinkedIn Page",
+            display_text="LinkedIn 🔗"
+        )
 
-    if selected_lead is not None:
-        # Generate button
-        if st.button("Generate Outreach", key='gen'):
-            msg_data = generate_outreach(selected_lead.to_dict())
-            # Validate
-            issues = judge_message(msg_data['revised'])
-            st.session_state['message_data'] = msg_data
-            st.session_state['issues'] = issues
-        # Display message if available
-        if st.session_state['message_data']:
-            data = st.session_state['message_data']['revised']
-            st.markdown(f"**Medium:** {data.get('medium','')}" )
-            subj = st.text_input("Subject", data.get('subject',''))
-            body = st.text_area("Body", data.get('body',''), height=300)
-            st.markdown(f"**Review:** {st.session_state.get('issues','OK')}")
-            # Send button
-            if st.button("Send Outreach", key='send'):
-                st.success(f"Outreach sent to {selected_lead['name']} via {data.get('medium')} from {sender_email}")
-    else:
-        st.write("Select one actionable lead to begin.")
+
+    st.dataframe(
+        df_filtered[final_display_columns],
+        use_container_width=True,
+        hide_index=True,
+        column_config=column_config
+    )
+else:
+    st.info("No leads match the current filter criteria.")
+
+# --- Sidebar for Download and Stats ---
+st.sidebar.markdown("---") # Divider
+
+if not df_filtered.empty:
+    st.sidebar.download_button(
+        label="Download Filtered Leads (CSV)",
+        data=df_filtered.to_csv(index=False).encode('utf-8'),
+        file_name="filtered_leads.csv",
+        mime="text/csv"
+    )
+else:
+    st.sidebar.info("No data to download based on current filters.")
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("Summary Statistics")
+if not df.empty: # Use original df for total stats before filtering for some context
+    st.sidebar.metric("Total Leads in File", len(df))
+if not df_filtered.empty:
+    st.sidebar.metric("Leads Displayed (Filtered)", len(df_filtered))
+    if "Status" in df_filtered.columns:
+        st.sidebar.write("Leads by Status (Filtered):")
+        status_counts = df_filtered["Status"].value_counts()
+        st.sidebar.dataframe(status_counts) # Display as a small table
+else:
+     st.sidebar.metric("Leads Displayed (Filtered)", 0)

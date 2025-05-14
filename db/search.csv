@@ -1,0 +1,704 @@
+name,mapyourshow_detail_url,company_website,description,location,phone,email,linkedin_company_page,raw_contacts_text,booth_number
+General Formulations,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?exhid=572,https://www.signexpo.org/,"My Planner
+My Profile
+Recommendations
+Sign Out",,"function parse_query_string(query) {
+		        var vars = query.split(""&"");
+		        var query_string = {};
+		        for (var i = 0; i < vars.length; i++) {
+		            var pair = vars[i].split(""="");
+		            var key = decodeURIComponent(pair[0]);
+		            var value = decodeURIComponent(pair[1]);
+
+		            // If first entry with this name
+		            if (typeof query_string[key] === ""undefined"") {
+		                query_string[key] = decodeURIComponent(value);
+		            // If second entry with this name
+		            } else if (typeof query_string[key] === ""string"") {
+		                var arr = [query_string[key], decodeURIComponent(value)];
+		                query_string[key] = arr;
+		            // If third or later entry with this name
+		            } else {
+		                query_string[key].push(decodeURIComponent(value));
+		            }
+		        }
+		        return query_string;
+		    }
+
+		    // handles the language change in includes/_language.cfm
+		    function changeLanguage(languageFormId){
+		    	if (languageFormId === undefined){
+		    		languageFormId = 'mys-langset';
+		    	}
+		    	var query = window.location.search.substring(1);
+		    	var qs;
+
+		    	if (query){
+		    		qs = parse_query_string(query);
+		    		for (var key in qs) {
+		    			var input = document.createElement(""input"");
+
+		    			input.setAttribute(""type"", ""hidden"");
+		    			input.setAttribute(""name"", key);
+		    			input.setAttribute(""value"", qs[key]);
+
+		    			//append to form element that you want .
+		    			document.getElementById(languageFormId).appendChild(input);
+		    		}
+		    	}
+		    	document.getElementById(languageFormId).action = window.location.pathname + window.location.hash;
+		    	document.getElementById(languageFormId).submit();
+		    }
+
+		    var query = window.location.search.substring(1);
+		    var qs;
+
+		    if (query){
+		        qs = parse_query_string(query);
+		    }
+
+		    
+			    function enableAppDownload() {
+			    	if (typeof(Storage) !== ""undefined"" && !sessionStorage.getItem(""mobileAppBannerClosed"")) {
+						var android = /Android/.test(navigator.userAgent);
+				    	// var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+				    	var isChromeForiOS = !!navigator.userAgent.match(/CriOS\/[\d\.]+.*Safari/);
+						var mobileAppBanner = document.getElementById(""mobileAppBanner"");
+						var appDownload = document.getElementById(""appDownloadButton"");
+
+						if (isChromeForiOS) {
+							
+								mobileAppBanner.style.display = ""block"";
+								appDownload.href = ""https://apps.apple.com/us/app/isa-international-sign-expo/id6475792976"";
+							
+						} else if (android) {
+							
+								mobileAppBanner.style.display = ""block"";
+								appDownload.href = ""https://play.google.com/store/apps/details?id=com.mapyourshow.ISASIGNEXPOMobileApp"";
+							
+						}
+					}
+				}
+
+				function closeAppDownload() {
+					document.getElementById(""mobileAppBanner"").style.display = ""none"";
+					if (typeof(Storage) !== ""undefined"") {
+						sessionStorage.setItem(""mobileAppBannerClosed"", true);
+					}
+				}","var onlinecontactscomponent = Vue.component('onlinecontactsv3',
+					{
+						name: 'onlinecontactsv3',
+						template: '#onlinecontacts-v3-template',
+						mixins: [messagedisplayMixin ],
+						data: function()
+						{
+							return {
+								contactid: 0,
+								contactname: '',
+								contactemail: '',
+								showemailcontactmodal: false,
+								shouldshowsendemail: true,
+								loggedin: false,
+								showemailexhibitor: false,
+								emailexhibitorexhid: '',
+								loading: false,
+								exhid: '572',
+								exhname: 'General Formulations',
+								index: 2
+							}
+						},
+						created()
+						{
+							// Array of exhibitor contacts and their current status
+							this.onlinecontactsdata = [{""zip"":"""",""facebook"":""https://www.facebook.com/Generalformulations"",""instagram"":""https://www.instagram.com/general_formulations/"",""lname"":""LaPreze"",""phone"":"""",""isreguser"":1,""state"":"""",""s3img"":"""",""email"":""mlapreze@generalformulations.com"",""contactid"":846,""published"":1,""exhname"":""General Formulations"",""country"":"""",""description"":"""",""chatid"":""user:^ShowID^-p-[CDAD43DB-130A-40CB-B72F-BD03DB4A5C82]"",""photo"":"""",""address1"":"""",""hasplanner"":0,""validated"":0,""fullname"":""Michelle LaPreze"",""address3"":"""",""address2"":"""",""linkedin"":""https://www.linkedin.com/company/general-formulations/"",""exhid"":""572"",""headshot"":"""",""availableforchat"":0,""department"":"""",""regid"":0,""contactstatus"":""Offline"",""fname"":""Michelle"",""city"":"""",""publishedsort"":1,""companyname"":""General Formulations"",""title"":""Director, Marketing Communications"",""phone2"":"""",""fax"":"""",""ocguid"":"""",""userregid"":569,""twitter"":""""}];
+
+							
+
+							this.loadNotifications();
+						},
+						methods:
+						{
+							openemailcontactmodal: function(contactid, contactname, contactemail)
+							{
+								this.$emit('open-onlinecontacts-email-modal', {contactid: contactid, fullname: contactname, contactemail: contactemail, showemailcontactmodal: true});
+							},
+							handleEmailEvent: function(event){
+								this.openemailcontactmodal(event.contactid, event.fullname, event.contactemail);
+							},
+							showChatWindow: function(event)
+							{
+								if(this.talkingtouserid != event.userid)
+								{
+									this.talkingtouserid = event.userid;
+									this.talkingtousername = event.fullname;
+
+									this.loadMessages(0, this.maxmessagesloaded);
+								}
+							},
+							loadNotifications()
+							{
+								if (this.hasSessionStorage())
+								{
+									this.newnotification = sessionStorage.getItem(""newnotification"") ? true : false;
+								}
+							},
+							removeNotification()
+							{
+								sessionStorage.removeItem(""newnotification"");
+								this.newnotification = false;
+							},
+							favoriteContact(contactindex)
+							{
+								this.onlinecontactsdata[contactindex].hasplanner = 1;
+							}
+						}
+					});",,Contact Us,
+Gildo Profilati,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?exhid=3457,https://www.signexpo.org/,"My Planner
+My Profile
+Recommendations
+Sign Out",,"function parse_query_string(query) {
+		        var vars = query.split(""&"");
+		        var query_string = {};
+		        for (var i = 0; i < vars.length; i++) {
+		            var pair = vars[i].split(""="");
+		            var key = decodeURIComponent(pair[0]);
+		            var value = decodeURIComponent(pair[1]);
+
+		            // If first entry with this name
+		            if (typeof query_string[key] === ""undefined"") {
+		                query_string[key] = decodeURIComponent(value);
+		            // If second entry with this name
+		            } else if (typeof query_string[key] === ""string"") {
+		                var arr = [query_string[key], decodeURIComponent(value)];
+		                query_string[key] = arr;
+		            // If third or later entry with this name
+		            } else {
+		                query_string[key].push(decodeURIComponent(value));
+		            }
+		        }
+		        return query_string;
+		    }
+
+		    // handles the language change in includes/_language.cfm
+		    function changeLanguage(languageFormId){
+		    	if (languageFormId === undefined){
+		    		languageFormId = 'mys-langset';
+		    	}
+		    	var query = window.location.search.substring(1);
+		    	var qs;
+
+		    	if (query){
+		    		qs = parse_query_string(query);
+		    		for (var key in qs) {
+		    			var input = document.createElement(""input"");
+
+		    			input.setAttribute(""type"", ""hidden"");
+		    			input.setAttribute(""name"", key);
+		    			input.setAttribute(""value"", qs[key]);
+
+		    			//append to form element that you want .
+		    			document.getElementById(languageFormId).appendChild(input);
+		    		}
+		    	}
+		    	document.getElementById(languageFormId).action = window.location.pathname + window.location.hash;
+		    	document.getElementById(languageFormId).submit();
+		    }
+
+		    var query = window.location.search.substring(1);
+		    var qs;
+
+		    if (query){
+		        qs = parse_query_string(query);
+		    }
+
+		    
+			    function enableAppDownload() {
+			    	if (typeof(Storage) !== ""undefined"" && !sessionStorage.getItem(""mobileAppBannerClosed"")) {
+						var android = /Android/.test(navigator.userAgent);
+				    	// var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+				    	var isChromeForiOS = !!navigator.userAgent.match(/CriOS\/[\d\.]+.*Safari/);
+						var mobileAppBanner = document.getElementById(""mobileAppBanner"");
+						var appDownload = document.getElementById(""appDownloadButton"");
+
+						if (isChromeForiOS) {
+							
+								mobileAppBanner.style.display = ""block"";
+								appDownload.href = ""https://apps.apple.com/us/app/isa-international-sign-expo/id6475792976"";
+							
+						} else if (android) {
+							
+								mobileAppBanner.style.display = ""block"";
+								appDownload.href = ""https://play.google.com/store/apps/details?id=com.mapyourshow.ISASIGNEXPOMobileApp"";
+							
+						}
+					}
+				}
+
+				function closeAppDownload() {
+					document.getElementById(""mobileAppBanner"").style.display = ""none"";
+					if (typeof(Storage) !== ""undefined"") {
+						sessionStorage.setItem(""mobileAppBannerClosed"", true);
+					}
+				}","var onlinecontactscomponent = Vue.component('onlinecontactsv3',
+					{
+						name: 'onlinecontactsv3',
+						template: '#onlinecontacts-v3-template',
+						mixins: [messagedisplayMixin ],
+						data: function()
+						{
+							return {
+								contactid: 0,
+								contactname: '',
+								contactemail: '',
+								showemailcontactmodal: false,
+								shouldshowsendemail: true,
+								loggedin: false,
+								showemailexhibitor: false,
+								emailexhibitorexhid: '',
+								loading: false,
+								exhid: '3457',
+								exhname: 'Gildo Profilati',
+								index: 2
+							}
+						},
+						created()
+						{
+							// Array of exhibitor contacts and their current status
+							this.onlinecontactsdata = [{""zip"":"""",""facebook"":"""",""instagram"":"""",""lname"":""TRABUCCHI"",""phone"":""+39 039 6900353 Ext.2"",""isreguser"":1,""state"":"""",""s3img"":"""",""email"":""ornella@gildo.it"",""contactid"":1137,""published"":1,""exhname"":""Gildo Profilati"",""country"":"""",""description"":"""",""chatid"":""user:^ShowID^-p-[3ED7BB4A-573D-4905-9001-C9BEF9951424]"",""photo"":"""",""address1"":"""",""hasplanner"":0,""validated"":0,""fullname"":""ORNELLA TRABUCCHI"",""address3"":"""",""address2"":"""",""linkedin"":"""",""exhid"":""3457"",""headshot"":"""",""availableforchat"":0,""department"":"""",""regid"":0,""contactstatus"":""Offline"",""fname"":""ORNELLA"",""city"":"""",""publishedsort"":1,""companyname"":""Gildo Profilati"",""title"":""Sales Manager"",""phone2"":"""",""fax"":"""",""ocguid"":"""",""userregid"":190,""twitter"":""""}];
+
+							
+
+							this.loadNotifications();
+						},
+						methods:
+						{
+							openemailcontactmodal: function(contactid, contactname, contactemail)
+							{
+								this.$emit('open-onlinecontacts-email-modal', {contactid: contactid, fullname: contactname, contactemail: contactemail, showemailcontactmodal: true});
+							},
+							handleEmailEvent: function(event){
+								this.openemailcontactmodal(event.contactid, event.fullname, event.contactemail);
+							},
+							showChatWindow: function(event)
+							{
+								if(this.talkingtouserid != event.userid)
+								{
+									this.talkingtouserid = event.userid;
+									this.talkingtousername = event.fullname;
+
+									this.loadMessages(0, this.maxmessagesloaded);
+								}
+							},
+							loadNotifications()
+							{
+								if (this.hasSessionStorage())
+								{
+									this.newnotification = sessionStorage.getItem(""newnotification"") ? true : false;
+								}
+							},
+							removeNotification()
+							{
+								sessionStorage.removeItem(""newnotification"");
+								this.newnotification = false;
+							},
+							favoriteContact(contactindex)
+							{
+								this.onlinecontactsdata[contactindex].hasplanner = 1;
+							}
+						}
+					});",,Contact Us,
+Laguna Tools Inc.,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?exhid=1803,https://www.signexpo.org/,"My Planner
+My Profile
+Recommendations
+Sign Out",,"function parse_query_string(query) {
+		        var vars = query.split(""&"");
+		        var query_string = {};
+		        for (var i = 0; i < vars.length; i++) {
+		            var pair = vars[i].split(""="");
+		            var key = decodeURIComponent(pair[0]);
+		            var value = decodeURIComponent(pair[1]);
+
+		            // If first entry with this name
+		            if (typeof query_string[key] === ""undefined"") {
+		                query_string[key] = decodeURIComponent(value);
+		            // If second entry with this name
+		            } else if (typeof query_string[key] === ""string"") {
+		                var arr = [query_string[key], decodeURIComponent(value)];
+		                query_string[key] = arr;
+		            // If third or later entry with this name
+		            } else {
+		                query_string[key].push(decodeURIComponent(value));
+		            }
+		        }
+		        return query_string;
+		    }
+
+		    // handles the language change in includes/_language.cfm
+		    function changeLanguage(languageFormId){
+		    	if (languageFormId === undefined){
+		    		languageFormId = 'mys-langset';
+		    	}
+		    	var query = window.location.search.substring(1);
+		    	var qs;
+
+		    	if (query){
+		    		qs = parse_query_string(query);
+		    		for (var key in qs) {
+		    			var input = document.createElement(""input"");
+
+		    			input.setAttribute(""type"", ""hidden"");
+		    			input.setAttribute(""name"", key);
+		    			input.setAttribute(""value"", qs[key]);
+
+		    			//append to form element that you want .
+		    			document.getElementById(languageFormId).appendChild(input);
+		    		}
+		    	}
+		    	document.getElementById(languageFormId).action = window.location.pathname + window.location.hash;
+		    	document.getElementById(languageFormId).submit();
+		    }
+
+		    var query = window.location.search.substring(1);
+		    var qs;
+
+		    if (query){
+		        qs = parse_query_string(query);
+		    }
+
+		    
+			    function enableAppDownload() {
+			    	if (typeof(Storage) !== ""undefined"" && !sessionStorage.getItem(""mobileAppBannerClosed"")) {
+						var android = /Android/.test(navigator.userAgent);
+				    	// var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+				    	var isChromeForiOS = !!navigator.userAgent.match(/CriOS\/[\d\.]+.*Safari/);
+						var mobileAppBanner = document.getElementById(""mobileAppBanner"");
+						var appDownload = document.getElementById(""appDownloadButton"");
+
+						if (isChromeForiOS) {
+							
+								mobileAppBanner.style.display = ""block"";
+								appDownload.href = ""https://apps.apple.com/us/app/isa-international-sign-expo/id6475792976"";
+							
+						} else if (android) {
+							
+								mobileAppBanner.style.display = ""block"";
+								appDownload.href = ""https://play.google.com/store/apps/details?id=com.mapyourshow.ISASIGNEXPOMobileApp"";
+							
+						}
+					}
+				}
+
+				function closeAppDownload() {
+					document.getElementById(""mobileAppBanner"").style.display = ""none"";
+					if (typeof(Storage) !== ""undefined"") {
+						sessionStorage.setItem(""mobileAppBannerClosed"", true);
+					}
+				}","var onlinecontactscomponent = Vue.component('onlinecontactsv3',
+					{
+						name: 'onlinecontactsv3',
+						template: '#onlinecontacts-v3-template',
+						mixins: [messagedisplayMixin ],
+						data: function()
+						{
+							return {
+								contactid: 0,
+								contactname: '',
+								contactemail: '',
+								showemailcontactmodal: false,
+								shouldshowsendemail: true,
+								loggedin: false,
+								showemailexhibitor: false,
+								emailexhibitorexhid: '',
+								loading: false,
+								exhid: '1803',
+								exhname: 'Laguna Tools Inc.',
+								index: 2
+							}
+						},
+						created()
+						{
+							// Array of exhibitor contacts and their current status
+							this.onlinecontactsdata = [{""zip"":"""",""facebook"":"""",""instagram"":"""",""lname"":""Friesen"",""phone"":"""",""isreguser"":0,""state"":"""",""s3img"":"""",""email"":""Jason_Friesen@lagunatools.com"",""contactid"":1063,""published"":1,""exhname"":""Laguna Tools Inc."",""country"":"""",""description"":"""",""chatid"":""user:^ShowID^-p-[]"",""photo"":"""",""address1"":"""",""hasplanner"":0,""validated"":0,""fullname"":""Jason Friesen"",""address3"":"""",""address2"":"""",""linkedin"":"""",""exhid"":""1803"",""headshot"":"""",""availableforchat"":0,""department"":"""",""regid"":0,""contactstatus"":""Offline"",""fname"":""Jason"",""city"":"""",""publishedsort"":1,""companyname"":""Laguna Tools Inc."",""title"":""North American CNC & Sign Equipment Sales"",""phone2"":"""",""fax"":"""",""ocguid"":"""",""userregid"":0,""twitter"":""""}];
+
+							
+
+							this.loadNotifications();
+						},
+						methods:
+						{
+							openemailcontactmodal: function(contactid, contactname, contactemail)
+							{
+								this.$emit('open-onlinecontacts-email-modal', {contactid: contactid, fullname: contactname, contactemail: contactemail, showemailcontactmodal: true});
+							},
+							handleEmailEvent: function(event){
+								this.openemailcontactmodal(event.contactid, event.fullname, event.contactemail);
+							},
+							showChatWindow: function(event)
+							{
+								if(this.talkingtouserid != event.userid)
+								{
+									this.talkingtouserid = event.userid;
+									this.talkingtousername = event.fullname;
+
+									this.loadMessages(0, this.maxmessagesloaded);
+								}
+							},
+							loadNotifications()
+							{
+								if (this.hasSessionStorage())
+								{
+									this.newnotification = sessionStorage.getItem(""newnotification"") ? true : false;
+								}
+							},
+							removeNotification()
+							{
+								sessionStorage.removeItem(""newnotification"");
+								this.newnotification = false;
+							},
+							favoriteContact(contactindex)
+							{
+								this.onlinecontactsdata[contactindex].hasplanner = 1;
+							}
+						}
+					});",,Contact Us,
+Principal Industries,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?exhid=622,https://www.signexpo.org/,"My Planner
+My Profile
+Recommendations
+Sign Out",,"function parse_query_string(query) {
+		        var vars = query.split(""&"");
+		        var query_string = {};
+		        for (var i = 0; i < vars.length; i++) {
+		            var pair = vars[i].split(""="");
+		            var key = decodeURIComponent(pair[0]);
+		            var value = decodeURIComponent(pair[1]);
+
+		            // If first entry with this name
+		            if (typeof query_string[key] === ""undefined"") {
+		                query_string[key] = decodeURIComponent(value);
+		            // If second entry with this name
+		            } else if (typeof query_string[key] === ""string"") {
+		                var arr = [query_string[key], decodeURIComponent(value)];
+		                query_string[key] = arr;
+		            // If third or later entry with this name
+		            } else {
+		                query_string[key].push(decodeURIComponent(value));
+		            }
+		        }
+		        return query_string;
+		    }
+
+		    // handles the language change in includes/_language.cfm
+		    function changeLanguage(languageFormId){
+		    	if (languageFormId === undefined){
+		    		languageFormId = 'mys-langset';
+		    	}
+		    	var query = window.location.search.substring(1);
+		    	var qs;
+
+		    	if (query){
+		    		qs = parse_query_string(query);
+		    		for (var key in qs) {
+		    			var input = document.createElement(""input"");
+
+		    			input.setAttribute(""type"", ""hidden"");
+		    			input.setAttribute(""name"", key);
+		    			input.setAttribute(""value"", qs[key]);
+
+		    			//append to form element that you want .
+		    			document.getElementById(languageFormId).appendChild(input);
+		    		}
+		    	}
+		    	document.getElementById(languageFormId).action = window.location.pathname + window.location.hash;
+		    	document.getElementById(languageFormId).submit();
+		    }
+
+		    var query = window.location.search.substring(1);
+		    var qs;
+
+		    if (query){
+		        qs = parse_query_string(query);
+		    }
+
+		    
+			    function enableAppDownload() {
+			    	if (typeof(Storage) !== ""undefined"" && !sessionStorage.getItem(""mobileAppBannerClosed"")) {
+						var android = /Android/.test(navigator.userAgent);
+				    	// var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+				    	var isChromeForiOS = !!navigator.userAgent.match(/CriOS\/[\d\.]+.*Safari/);
+						var mobileAppBanner = document.getElementById(""mobileAppBanner"");
+						var appDownload = document.getElementById(""appDownloadButton"");
+
+						if (isChromeForiOS) {
+							
+								mobileAppBanner.style.display = ""block"";
+								appDownload.href = ""https://apps.apple.com/us/app/isa-international-sign-expo/id6475792976"";
+							
+						} else if (android) {
+							
+								mobileAppBanner.style.display = ""block"";
+								appDownload.href = ""https://play.google.com/store/apps/details?id=com.mapyourshow.ISASIGNEXPOMobileApp"";
+							
+						}
+					}
+				}
+
+				function closeAppDownload() {
+					document.getElementById(""mobileAppBanner"").style.display = ""none"";
+					if (typeof(Storage) !== ""undefined"") {
+						sessionStorage.setItem(""mobileAppBannerClosed"", true);
+					}
+				}",,,,
+Signage Details,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?exhid=4990,https://www.signexpo.org/,"My Planner
+My Profile
+Recommendations
+Sign Out",,"function parse_query_string(query) {
+		        var vars = query.split(""&"");
+		        var query_string = {};
+		        for (var i = 0; i < vars.length; i++) {
+		            var pair = vars[i].split(""="");
+		            var key = decodeURIComponent(pair[0]);
+		            var value = decodeURIComponent(pair[1]);
+
+		            // If first entry with this name
+		            if (typeof query_string[key] === ""undefined"") {
+		                query_string[key] = decodeURIComponent(value);
+		            // If second entry with this name
+		            } else if (typeof query_string[key] === ""string"") {
+		                var arr = [query_string[key], decodeURIComponent(value)];
+		                query_string[key] = arr;
+		            // If third or later entry with this name
+		            } else {
+		                query_string[key].push(decodeURIComponent(value));
+		            }
+		        }
+		        return query_string;
+		    }
+
+		    // handles the language change in includes/_language.cfm
+		    function changeLanguage(languageFormId){
+		    	if (languageFormId === undefined){
+		    		languageFormId = 'mys-langset';
+		    	}
+		    	var query = window.location.search.substring(1);
+		    	var qs;
+
+		    	if (query){
+		    		qs = parse_query_string(query);
+		    		for (var key in qs) {
+		    			var input = document.createElement(""input"");
+
+		    			input.setAttribute(""type"", ""hidden"");
+		    			input.setAttribute(""name"", key);
+		    			input.setAttribute(""value"", qs[key]);
+
+		    			//append to form element that you want .
+		    			document.getElementById(languageFormId).appendChild(input);
+		    		}
+		    	}
+		    	document.getElementById(languageFormId).action = window.location.pathname + window.location.hash;
+		    	document.getElementById(languageFormId).submit();
+		    }
+
+		    var query = window.location.search.substring(1);
+		    var qs;
+
+		    if (query){
+		        qs = parse_query_string(query);
+		    }
+
+		    
+			    function enableAppDownload() {
+			    	if (typeof(Storage) !== ""undefined"" && !sessionStorage.getItem(""mobileAppBannerClosed"")) {
+						var android = /Android/.test(navigator.userAgent);
+				    	// var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+				    	var isChromeForiOS = !!navigator.userAgent.match(/CriOS\/[\d\.]+.*Safari/);
+						var mobileAppBanner = document.getElementById(""mobileAppBanner"");
+						var appDownload = document.getElementById(""appDownloadButton"");
+
+						if (isChromeForiOS) {
+							
+								mobileAppBanner.style.display = ""block"";
+								appDownload.href = ""https://apps.apple.com/us/app/isa-international-sign-expo/id6475792976"";
+							
+						} else if (android) {
+							
+								mobileAppBanner.style.display = ""block"";
+								appDownload.href = ""https://play.google.com/store/apps/details?id=com.mapyourshow.ISASIGNEXPOMobileApp"";
+							
+						}
+					}
+				}
+
+				function closeAppDownload() {
+					document.getElementById(""mobileAppBanner"").style.display = ""none"";
+					if (typeof(Storage) !== ""undefined"") {
+						sessionStorage.setItem(""mobileAppBannerClosed"", true);
+					}
+				}","var onlinecontactscomponent = Vue.component('onlinecontactsv3',
+					{
+						name: 'onlinecontactsv3',
+						template: '#onlinecontacts-v3-template',
+						mixins: [messagedisplayMixin ],
+						data: function()
+						{
+							return {
+								contactid: 0,
+								contactname: '',
+								contactemail: '',
+								showemailcontactmodal: false,
+								shouldshowsendemail: true,
+								loggedin: false,
+								showemailexhibitor: false,
+								emailexhibitorexhid: '',
+								loading: false,
+								exhid: '4990',
+								exhname: 'Signage Details',
+								index: 2
+							}
+						},
+						created()
+						{
+							// Array of exhibitor contacts and their current status
+							this.onlinecontactsdata = [{""zip"":"""",""facebook"":""https://www.facebook.com/signagedetails/"",""instagram"":""https://www.instagram.com/signagedetails/"",""lname"":""Nauta"",""phone"":""562-841-9153"",""isreguser"":1,""state"":"""",""s3img"":""https://d3fv3oe83qat1b.cloudfront.net/eyJlZGl0cyI6eyJyZXNpemUiOnsiZml0IjoiY292ZXIiLCJ3aWR0aCI6MTMwLjAsImhlaWdodCI6MTMwLjB9fSwiYnVja2V0IjoibXlzLXNob3dmaWxlcyIsImtleSI6InByb2R1Y3Rpb24vaXNhc2lnbmV4cG8yMDI1L29ubGluZV9jb250YWN0X2hlYWRzaG90cy80OTkwL0FDQkI3RTM4LUUwRkEtQjNGRC1CQkI0QjUzQjg5MTE1MjlFLnBuZyJ9"",""email"":""john@signagedetails.com"",""contactid"":10,""published"":1,""exhname"":""Signage Details"",""country"":"""",""description"":""<p>Electrical Sign Design Innovator<br><br>John Nauta began his career in the sign industry over 25 years ago. His ability to quickly master CorelDRAW and develop a deep understanding of sign fabrication and installation methods enabled him to rapidly advance from production designer to Design Director. Despite his team’s extensive experience in creating section install details, John noticed that significant time was wasted each month searching for files and modifying wall types, attachment methods, electrical provisions, and sign types. This insight led him to develop SignageDetails.com.<br><br>In 2021, John founded Signage Details, an online subscription service designed to be the ultimate resource hub for sign companies worldwide. Their exclusive, patent-pending, intuitive Select-A-Sign tool allows users to create comprehensive section details for fabricating and installing commercial signs and integrate them into their plans in as little as 60 seconds, regardless of the design program used.</p>"",""chatid"":""user:^ShowID^-p-[B5A42B46-37A5-4E0B-BA6F-869C3FC22E5E]"",""photo"":"""",""address1"":"""",""hasplanner"":0,""validated"":0,""fullname"":""John Nauta"",""address3"":"""",""address2"":"""",""linkedin"":""https://www.linkedin.com/company/signagedetails/"",""exhid"":""4990"",""headshot"":""ACBB7E38-E0FA-B3FD-BBB4B53B8911529E.png"",""availableforchat"":0,""department"":"""",""regid"":0,""contactstatus"":""Offline"",""fname"":""John"",""city"":"""",""publishedsort"":1,""companyname"":""Signage Details"",""title"":""Owner"",""phone2"":"""",""fax"":"""",""ocguid"":"""",""userregid"":141,""twitter"":""""}];
+
+							
+
+							this.loadNotifications();
+						},
+						methods:
+						{
+							openemailcontactmodal: function(contactid, contactname, contactemail)
+							{
+								this.$emit('open-onlinecontacts-email-modal', {contactid: contactid, fullname: contactname, contactemail: contactemail, showemailcontactmodal: true});
+							},
+							handleEmailEvent: function(event){
+								this.openemailcontactmodal(event.contactid, event.fullname, event.contactemail);
+							},
+							showChatWindow: function(event)
+							{
+								if(this.talkingtouserid != event.userid)
+								{
+									this.talkingtouserid = event.userid;
+									this.talkingtousername = event.fullname;
+
+									this.loadMessages(0, this.maxmessagesloaded);
+								}
+							},
+							loadNotifications()
+							{
+								if (this.hasSessionStorage())
+								{
+									this.newnotification = sessionStorage.getItem(""newnotification"") ? true : false;
+								}
+							},
+							removeNotification()
+							{
+								sessionStorage.removeItem(""newnotification"");
+								this.newnotification = false;
+							},
+							favoriteContact(contactindex)
+							{
+								this.onlinecontactsdata[contactindex].hasplanner = 1;
+							}
+						}
+					});",,Contact Us,
