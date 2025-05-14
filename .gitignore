@@ -1,1 +1,23 @@
 .env
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.venv/
+ENV/
+env/
+venv.bak/
+.env # Also good to ignore .env files if they contain secrets
+
+# IDE / Editor specific
+.vscode/
+.idea/
+*.DS_Store
+
+# Other
+*.log
+*.tmp
+*.swp
