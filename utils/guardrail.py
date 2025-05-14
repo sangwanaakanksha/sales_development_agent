@@ -1,93 +1,158 @@
 # utils/guardrail.py
 import os
 import logging
-from langchain_openai import OpenAI # Updated import
+import re
+from langchain_openai import OpenAI
 
-# Configure logger
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+if not logger.hasHandlers():
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-# Initialize LLM once if possible, or ensure API key is available
+llm = None
 try:
-    llm = OpenAI(temperature=0.2, model_name="gpt-3.5-turbo-instruct") # Using a slightly more capable model for refinement
+    llm = OpenAI(temperature=0.4, model_name="gpt-3.5-turbo-instruct", max_tokens=250) # Slightly higher temp for more variation
+    logger.info("Guardrail LLM (gpt-3.5-turbo-instruct) initialized.")
 except Exception as e:
-    logger.error(f"Failed to initialize OpenAI LLM for guardrail: {e}. Ensure OPENAI_API_KEY is set.")
-    llm = None
+    logger.error(f"Failed to initialize OpenAI LLM for guardrail: {e}. Guardrail will use basic fallbacks.")
 
-def refine_outreach_message(original_message: str, company_name: str, company_description: str, event_name: str = "ISA Sign Expo 2025") -> str:
+def is_description_meaningful(description: str) -> bool:
+    """Checks if the description is likely meaningful content vs. boilerplate."""
+    if not description or len(description) < 25: # Too short
+        return False
+    # List of phrases indicating a poor/boilerplate description
+    non_descriptive_phrases = [
+        "no detailed description available",
+        "no available appointments",
+        "my planner", "my profile", "sign out",
+        "exhibitor details", "more information",
+        "javascript:", "function", "error"
+    ]
+    desc_lower = description.lower()
+    for phrase in non_descriptive_phrases:
+        if phrase in desc_lower:
+            return False
+    # Check for at least a few words that are not just common stop words or single characters
+    meaningful_words = re.findall(r'\b[a-zA-Z]{3,}\b', description)
+    return len(meaningful_words) > 5
+
+
+def refine_outreach_message(
+    original_message_context: str, # This can be a simple trigger phrase or key points
+    company_name: str,
+    company_description: str,
+    event_name: str = "ISA Sign Expo 2025",
+    user_name_for_signature: str = "Our Team" # For LLM context, not for direct inclusion
+) -> str:
     """
-    Refines a given outreach message using an LLM to make it more natural,
-    corrective, and ensure it's appropriate.
-    Defaults to a generic safe message if refinement fails or input is problematic.
+    Refines an outreach message using an LLM, making it more natural and relevant.
     """
     if not llm:
-        logger.warning("Guardrail LLM not initialized. Returning original message or a generic one.")
-        if "My Planner" in original_message or len(original_message) < 50 : # Crude check for bad generation
-             return f"Dear team at {company_name},\n\nIt was a pleasure to learn about your work in relation to {event_name}. We are impressed with your company and would be keen to explore potential synergies.\n\nBest regards,\n[Your Name/Company]"
-        return original_message
+        logger.warning("Guardrail LLM not initialized. Using a template-based fallback message.")
+        # Fallback to a simpler template if LLM is not available
+        meaningful_desc = is_description_meaningful(company_description)
+        desc_snippet = company_description[:100].strip().rstrip('.') + "..." if meaningful_desc else "your work and presence"
+        
+        return (f"It was a pleasure to learn about {company_name} during {event_name}. "
+                f"We were impressed by {desc_snippet} and see potential for collaboration. "
+                f"Would you be open to a brief discussion?")
 
-    # Clean up common boilerplate from description if it slipped through
-    cleaned_description = company_description.replace("My Planner", "").replace("My Profile", "").replace("Recommendations", "").replace("Sign Out", "").strip()
-    if not cleaned_description or len(cleaned_description) < 20: # If description is too short or junk
-        description_context = f"their presence at {event_name}"
+    # Determine if the provided description is useful for personalization
+    meaningful_description_available = is_description_meaningful(company_description)
+    
+    description_for_prompt = ""
+    if meaningful_description_available:
+        description_for_prompt = f"Their specific focus seems to be on: '{company_description[:200]}'."
     else:
-        description_context = f"their work in '{cleaned_description[:100].strip().rstrip('.')}' showcased around {event_name}"
+        description_for_prompt = "Their company description from the event page was not very detailed or appeared to be boilerplate."
 
+    prompt = f"""
+You are an expert Sales Development Representative, crafting a concise, polite, and engaging outreach email body.
+The goal is to initiate a conversation.
 
-    prompt_template = f"""
-    You are an expert sales development representative.
-    Your task is to refine an initial draft of an outreach email.
-    The goal is to make it sound natural, engaging, and professional.
-    It should imply a positive interaction or observation related to {event_name}.
+Event: {event_name}
+Company to Contact: {company_name}
+Context about the company (use this to personalize if specific, otherwise make a general positive remark about their presence at the event):
+"{description_for_prompt}"
 
-    Original company description context: "{description_context}"
-    Company Name: {company_name}
+Sender's Name (for context only, do NOT include in the message body): {user_name_for_signature}
 
-    Initial Draft:
-    "{original_message}"
+Instructions for the refined message body:
+1.  **Opening:** Start with a warm, professional opening that feels like a natural follow-up from the event. Examples:
+    * "It was great to see {company_name}'s presence at {event_name}."
+    * "Following {company_name}'s participation at {event_name}, I was particularly interested in..."
+    * "Inspired by your company's showcase at {event_name}..."
+    * "Hope you had a successful {event_name}."
+2.  **Personalization & Value:**
+    * If the company context indicates a specific focus (from "{description_for_prompt}"), briefly and naturally mention it to show genuine interest.
+    * If the company context is generic or indicates a poor description, make a more general positive statement about their industry, their presence at the event, or an assumption of their general field based on the event type. For example: "Your company's contributions to the signage industry are noteworthy." or "We were impressed by the innovations showcased by companies like yours at the event."
+    * Briefly suggest a potential for collaboration or mutual benefit without being overly salesy.
+3.  **Call to Action:** Include a soft and clear call to action. Examples:
+    * "Would you be open to a brief introductory call next week to explore this further?"
+    * "I'd be happy to share a few ideas on how we might collaborate if you're available for a quick chat."
+4.  **Tone:** Professional, respectful, concise, and genuinely interested. Avoid hype or overly casual language.
+5.  **Length:** Keep the entire message body relatively short, ideally 3-5 sentences.
+6.  **Output Format:** Provide ONLY the email body. Do NOT include "Subject:", "Dear [Name]," or any signature block (e.g., "Best regards..."). The signature will be added separately.
+7.  **Crucial - Avoid Junk & Placeholders:** Absolutely NO placeholders like "[Your Name/Company]", "Rationale not extracted", or any HTML/JavaScript remnants like "My Planner", "function parse_query_string". The message must be clean and ready to send (once the signature is appended).
 
-    Refinement Instructions:
-    1. Rewrite the message to be more conversational and engaging.
-    2. Start with a warm opening, such as "It was a pleasure connecting with your team at {event_name}," or "Following the insightful discussions at {event_name}," or "Inspired by your presence at {event_name},".
-    3. Ensure the message refers to the company's work or focus, using the provided description context if it's meaningful. If the description context seems like boilerplate or is unhelpful (e.g., just navigation text), then make a more general positive statement about the company.
-    4. Remove any awkward phrasing, code snippets, or placeholder text like "[Your Name/Company]" from the body (the signature will be added later).
-    5. Ensure the tone is polite, professional, and expresses genuine interest.
-    6. If the initial draft is nonsensical, contains JavaScript, or is clearly just boilerplate HTML text, discard it and generate a new, concise, and appropriate message based on the company name and the event. A generic good message would be: "It was great to learn about {company_name} in the context of {event_name}. We're impressed with your company's focus and see potential for collaboration. Would you be open to a brief chat?"
-    7. The refined message should be just the email body, without "Subject:", "Dear...", or a signature block.
-
-    Refined Message (email body only):
+Refined Email Body:
     """
 
     try:
-        refined_text = llm.invoke(prompt_template).strip()
+        refined_text = llm.invoke(prompt).strip()
         
-        # Basic safety/quality checks on LLM output
-        if not refined_text or len(refined_text) < 30 or "My Planner" in refined_text: # crude check for bad refinement
-            logger.warning(f"Refinement for {company_name} resulted in a problematic message. Using generic fallback.")
-            return f"It was great to learn about {company_name} in the context of {event_name}. We're impressed with your company's focus and see potential for collaboration. Would you be open to a brief chat?"
+        # Clean common LLM self-correction phrases or conversational fluff
+        refined_text = refined_text.replace("Refined Email Body:", "").strip()
+        common_llm_openers = ["Here's a refined email body:", "Certainly, here's the refined message:", "Okay, here's a version:"]
+        for opener in common_llm_openers:
+            if refined_text.startswith(opener):
+                refined_text = refined_text[len(opener):].strip()
+        
+        # Ensure it doesn't end with a signature-like closing if the LLM adds one
+        if re.search(r"(Best regards|Sincerely|Thanks),?$", refined_text, re.IGNORECASE):
+            refined_text = re.sub(r"(Best regards|Sincerely|Thanks),?$", "", refined_text, flags=re.IGNORECASE).strip()
+
+
+        if not refined_text or len(refined_text) < 50: # Check for empty or too short response
+            logger.warning(f"LLM refinement for {company_name} was too short or empty. Using a more direct generic fallback.")
+            desc_snippet = company_description[:70].strip().rstrip('.') + "..." if meaningful_description_available else "your company's work"
+            return (f"Following {event_name}, I wanted to reach out regarding {company_name}. "
+                    f"We were impressed by {desc_snippet} and see potential for collaboration. "
+                    f"Would you be open to a brief discussion?")
+        
+        logger.info(f"Refined message for {company_name} (first 100 chars): {refined_text[:100]}...")
         return refined_text
     except Exception as e:
         logger.error(f"Error during guardrail LLM call for {company_name}: {e}")
-        # Fallback to a very generic message if LLM refinement fails
-        return f"It was great to learn about {company_name} in the context of {event_name}. We're impressed with your company's focus and see potential for collaboration. Would you be open to a brief chat?"
+        desc_snippet = company_description[:70].strip().rstrip('.') + "..." if meaningful_description_available else "your company's work"
+        return (f"Following {event_name}, I wanted to reach out regarding {company_name}. "
+                f"We were impressed by {desc_snippet} and see potential for collaboration. "
+                f"Would you be open to a brief discussion?")
 
 if __name__ == "__main__":
-    # Test the guardrail
-    test_bad_message = "Hi team at TestCorp,\n\nNoticed TestCorp from the ISA Sign Expo exhibitor list. Your focus on 'My Planner My Profile Recommendations Sign Out...' particularly stood out.\n\nBest regards,\n[Your Name/Company]"
-    test_company = "TestCorp"
-    test_description = "My Planner My Profile Recommendations Sign Out"
+    print("--- Testing guardrail.py (ensure OPENAI_API_KEY is set) ---")
+    if not os.getenv("OPENAI_API_KEY"):
+        print("WARNING: OPENAI_API_KEY not set. LLM calls in smoke test will likely fail or use mock if implemented.")
     
-    print("Testing with bad description:")
-    refined = refine_outreach_message(test_bad_message, test_company, test_description)
-    print(f"Original:\n{test_bad_message}\nRefined:\n{refined}")
+    test_cases = [
+        {"name": "Alpha Innovations", "desc": "Leading provider of AI-driven logistics solutions and advanced robotics for warehouse automation.", "event": "Supply Chain Expo"},
+        {"name": "Beta Graphics", "desc": "My Planner My Profile Recommendations Sign Out", "event": "Visual Arts Fair"},
+        {"name": "Gamma Tech", "desc": "function parseIt() { return 'bad stuff'; }", "event": "Dev Conference"},
+        {"name": "Delta Solutions", "desc": "Provides innovative software for small businesses.", "event": "SMB Summit"},
+        {"name": "Epsilon Energy", "desc": "", "event": "Green Energy Forum"}
+    ]
+    user_name = "Alex Demo"
 
-    print("\nTesting with decent description:")
-    test_good_description = "innovative digital displays"
-    test_good_message = f"Hi team at {test_company},\n\nYour work in '{test_good_description}' caught my eye. Would be great to connect."
-    refined_good = refine_outreach_message(test_good_message, test_company, test_good_description)
-    print(f"Original:\n{test_good_message}\nRefined:\n{refined_good}")
+    for case in test_cases:
+        print(f"\n--- Refining for: {case['name']} ---")
+        print(f"Original Description: '{case['desc']}'")
+        refined_msg_body = refine_outreach_message(
+            original_message_context="Initial interest.", # Context for LLM
+            company_name=case['name'],
+            company_description=case['desc'],
+            event_name=case['event'],
+            user_name_for_signature=user_name # For LLM context
+        )
+        final_email = f"{refined_msg_body}\n\nBest regards,\n{user_name}\nDemoCorp"
+        print(f"Full Outreach Example:\n{final_email}")
+        print("-" * 30)
 
-    print("\nTesting with nonsensical message (simulating JS code):")
-    test_js_message = "function parse_query_string(query) { var vars = query.split('&');"
-    refined_js = refine_outreach_message(test_js_message, "JS Corp", "Data Analytics")
-    print(f"Original:\n{test_js_message}\nRefined:\n{refined_js}")

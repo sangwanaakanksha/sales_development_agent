@@ -12,7 +12,7 @@ from utils.input_processing import process_input_file
 from utils.search import search_leads
 from utils.enrichment import enrich_leads
 from utils.outreach import generate_outreach
-from utils.judge import judge_message
+from utils.guardrail import judge_message
 from langchain.agents import initialize_agent, Tool
 from langchain_community.llms import OpenAI
 from langchain.memory import ConversationBufferMemory

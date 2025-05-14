@@ -1,724 +1,115 @@
-name,mapyourshow_detail_url,company_website,description,location,phone,email,linkedin_company_page,raw_contacts_text,booth_number,size,revenue,industry,qualified,actionable,outreach_message,Status
-General Formulations,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?exhid=572,https://www.signexpo.org/,"My Planner
-My Profile
-Recommendations
-Sign Out",,"function parse_query_string(query) {
-		        var vars = query.split(""&"");
-		        var query_string = {};
-		        for (var i = 0; i < vars.length; i++) {
-		            var pair = vars[i].split(""="");
-		            var key = decodeURIComponent(pair[0]);
-		            var value = decodeURIComponent(pair[1]);
-
-		            // If first entry with this name
-		            if (typeof query_string[key] === ""undefined"") {
-		                query_string[key] = decodeURIComponent(value);
-		            // If second entry with this name
-		            } else if (typeof query_string[key] === ""string"") {
-		                var arr = [query_string[key], decodeURIComponent(value)];
-		                query_string[key] = arr;
-		            // If third or later entry with this name
-		            } else {
-		                query_string[key].push(decodeURIComponent(value));
-		            }
-		        }
-		        return query_string;
-		    }
-
-		    // handles the language change in includes/_language.cfm
-		    function changeLanguage(languageFormId){
-		    	if (languageFormId === undefined){
-		    		languageFormId = 'mys-langset';
-		    	}
-		    	var query = window.location.search.substring(1);
-		    	var qs;
-
-		    	if (query){
-		    		qs = parse_query_string(query);
-		    		for (var key in qs) {
-		    			var input = document.createElement(""input"");
-
-		    			input.setAttribute(""type"", ""hidden"");
-		    			input.setAttribute(""name"", key);
-		    			input.setAttribute(""value"", qs[key]);
-
-		    			//append to form element that you want .
-		    			document.getElementById(languageFormId).appendChild(input);
-		    		}
-		    	}
-		    	document.getElementById(languageFormId).action = window.location.pathname + window.location.hash;
-		    	document.getElementById(languageFormId).submit();
-		    }
-
-		    var query = window.location.search.substring(1);
-		    var qs;
-
-		    if (query){
-		        qs = parse_query_string(query);
-		    }
-
-		    
-			    function enableAppDownload() {
-			    	if (typeof(Storage) !== ""undefined"" && !sessionStorage.getItem(""mobileAppBannerClosed"")) {
-						var android = /Android/.test(navigator.userAgent);
-				    	// var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-				    	var isChromeForiOS = !!navigator.userAgent.match(/CriOS\/[\d\.]+.*Safari/);
-						var mobileAppBanner = document.getElementById(""mobileAppBanner"");
-						var appDownload = document.getElementById(""appDownloadButton"");
-
-						if (isChromeForiOS) {
-							
-								mobileAppBanner.style.display = ""block"";
-								appDownload.href = ""https://apps.apple.com/us/app/isa-international-sign-expo/id6475792976"";
-							
-						} else if (android) {
-							
-								mobileAppBanner.style.display = ""block"";
-								appDownload.href = ""https://play.google.com/store/apps/details?id=com.mapyourshow.ISASIGNEXPOMobileApp"";
-							
-						}
-					}
-				}
-
-				function closeAppDownload() {
-					document.getElementById(""mobileAppBanner"").style.display = ""none"";
-					if (typeof(Storage) !== ""undefined"") {
-						sessionStorage.setItem(""mobileAppBannerClosed"", true);
-					}
-				}","var onlinecontactscomponent = Vue.component('onlinecontactsv3',
-					{
-						name: 'onlinecontactsv3',
-						template: '#onlinecontacts-v3-template',
-						mixins: [messagedisplayMixin ],
-						data: function()
-						{
-							return {
-								contactid: 0,
-								contactname: '',
-								contactemail: '',
-								showemailcontactmodal: false,
-								shouldshowsendemail: true,
-								loggedin: false,
-								showemailexhibitor: false,
-								emailexhibitorexhid: '',
-								loading: false,
-								exhid: '572',
-								exhname: 'General Formulations',
-								index: 2
-							}
-						},
-						created()
-						{
-							// Array of exhibitor contacts and their current status
-							this.onlinecontactsdata = [{""zip"":"""",""facebook"":""https://www.facebook.com/Generalformulations"",""instagram"":""https://www.instagram.com/general_formulations/"",""lname"":""LaPreze"",""phone"":"""",""isreguser"":1,""state"":"""",""s3img"":"""",""email"":""mlapreze@generalformulations.com"",""contactid"":846,""published"":1,""exhname"":""General Formulations"",""country"":"""",""description"":"""",""chatid"":""user:^ShowID^-p-[CDAD43DB-130A-40CB-B72F-BD03DB4A5C82]"",""photo"":"""",""address1"":"""",""hasplanner"":0,""validated"":0,""fullname"":""Michelle LaPreze"",""address3"":"""",""address2"":"""",""linkedin"":""https://www.linkedin.com/company/general-formulations/"",""exhid"":""572"",""headshot"":"""",""availableforchat"":0,""department"":"""",""regid"":0,""contactstatus"":""Offline"",""fname"":""Michelle"",""city"":"""",""publishedsort"":1,""companyname"":""General Formulations"",""title"":""Director, Marketing Communications"",""phone2"":"""",""fax"":"""",""ocguid"":"""",""userregid"":569,""twitter"":""""}];
-
-							
-
-							this.loadNotifications();
-						},
-						methods:
-						{
-							openemailcontactmodal: function(contactid, contactname, contactemail)
-							{
-								this.$emit('open-onlinecontacts-email-modal', {contactid: contactid, fullname: contactname, contactemail: contactemail, showemailcontactmodal: true});
-							},
-							handleEmailEvent: function(event){
-								this.openemailcontactmodal(event.contactid, event.fullname, event.contactemail);
-							},
-							showChatWindow: function(event)
-							{
-								if(this.talkingtouserid != event.userid)
-								{
-									this.talkingtouserid = event.userid;
-									this.talkingtousername = event.fullname;
-
-									this.loadMessages(0, this.maxmessagesloaded);
-								}
-							},
-							loadNotifications()
-							{
-								if (this.hasSessionStorage())
-								{
-									this.newnotification = sessionStorage.getItem(""newnotification"") ? true : false;
-								}
-							},
-							removeNotification()
-							{
-								sessionStorage.removeItem(""newnotification"");
-								this.newnotification = false;
-							},
-							favoriteContact(contactindex)
-							{
-								this.onlinecontactsdata[contactindex].hasplanner = 1;
-							}
-						}
-					});",,Contact Us,,,,,Yes,Yes,"It was great to learn about General Formulations in the context of ISA Sign Expo 2025. We're impressed with your company's focus and see potential for collaboration. Would you be open to a brief chat?
+name,mapyourshow_detail_url,company_website,description,location,phone,email,linkedin_company_page,raw_contacts_text,booth_number,size,revenue,industry,linkedin_company_page_serpapi,qualified,qualification_rationale,actionable,outreach_message,Status
+General Formulations,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?=572,https://www.signexpo.org/,"(GF) is a global manufacturer of pressure-sensitive print media headquartered in the USA, since 1953. GF offers a cross-platform portfolio of print and cut film and laminate solutions, which include rolls for wide format and sheets for narrow format digital printers, as well as offset print technologies, for windows, walls, and floors, point of purchase, outdoor, vehicle, fleet and transit applications, and more. GF prides itself on experienced technical research & development and exceptional customer service. For more information on , visit www.generalformulations.com.",,,,,"Company Information Contact Us About General Formulations Product Categories Consumables - Adhesives Consumables - Laminates Consumables - Substrates Rigid Consumables - Substrates Roll to Roll Consumables - Vinyl (self-adhesive, banner, etc.) Printers - Roll-to-Roll Printers - Screen Printing Printers - UV Software - Graphic Design Trade Specific Products - ADA Signage/Architectural Signage Collateral Special Offers",,,,,https://www.linkedin.com/company/general-formulations,Yes,Rationale not extracted by LLM.,Yes,"It was great to see General Formulations's presence at ISA Sign Expo 2025. Your company's contributions to the signage industry are noteworthy and we were impressed by the innovations showcased by companies like yours at the event. Following your participation, I was particularly interested in exploring potential collaboration or mutual benefit. Would you be open to a brief introductory call next week to discuss further? I'd be happy to share a few ideas on how we might work together. Looking forward to your response.
 
 Best regards,
-As
+Aakanksha
 DuPont Tedlar",incomplete
-Gildo Profilati,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?exhid=3457,https://www.signexpo.org/,"My Planner
-My Profile
-Recommendations
-Sign Out",,"function parse_query_string(query) {
-		        var vars = query.split(""&"");
-		        var query_string = {};
-		        for (var i = 0; i < vars.length; i++) {
-		            var pair = vars[i].split(""="");
-		            var key = decodeURIComponent(pair[0]);
-		            var value = decodeURIComponent(pair[1]);
-
-		            // If first entry with this name
-		            if (typeof query_string[key] === ""undefined"") {
-		                query_string[key] = decodeURIComponent(value);
-		            // If second entry with this name
-		            } else if (typeof query_string[key] === ""string"") {
-		                var arr = [query_string[key], decodeURIComponent(value)];
-		                query_string[key] = arr;
-		            // If third or later entry with this name
-		            } else {
-		                query_string[key].push(decodeURIComponent(value));
-		            }
-		        }
-		        return query_string;
-		    }
-
-		    // handles the language change in includes/_language.cfm
-		    function changeLanguage(languageFormId){
-		    	if (languageFormId === undefined){
-		    		languageFormId = 'mys-langset';
-		    	}
-		    	var query = window.location.search.substring(1);
-		    	var qs;
-
-		    	if (query){
-		    		qs = parse_query_string(query);
-		    		for (var key in qs) {
-		    			var input = document.createElement(""input"");
-
-		    			input.setAttribute(""type"", ""hidden"");
-		    			input.setAttribute(""name"", key);
-		    			input.setAttribute(""value"", qs[key]);
-
-		    			//append to form element that you want .
-		    			document.getElementById(languageFormId).appendChild(input);
-		    		}
-		    	}
-		    	document.getElementById(languageFormId).action = window.location.pathname + window.location.hash;
-		    	document.getElementById(languageFormId).submit();
-		    }
-
-		    var query = window.location.search.substring(1);
-		    var qs;
-
-		    if (query){
-		        qs = parse_query_string(query);
-		    }
-
-		    
-			    function enableAppDownload() {
-			    	if (typeof(Storage) !== ""undefined"" && !sessionStorage.getItem(""mobileAppBannerClosed"")) {
-						var android = /Android/.test(navigator.userAgent);
-				    	// var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-				    	var isChromeForiOS = !!navigator.userAgent.match(/CriOS\/[\d\.]+.*Safari/);
-						var mobileAppBanner = document.getElementById(""mobileAppBanner"");
-						var appDownload = document.getElementById(""appDownloadButton"");
-
-						if (isChromeForiOS) {
-							
-								mobileAppBanner.style.display = ""block"";
-								appDownload.href = ""https://apps.apple.com/us/app/isa-international-sign-expo/id6475792976"";
-							
-						} else if (android) {
-							
-								mobileAppBanner.style.display = ""block"";
-								appDownload.href = ""https://play.google.com/store/apps/details?id=com.mapyourshow.ISASIGNEXPOMobileApp"";
-							
-						}
-					}
-				}
-
-				function closeAppDownload() {
-					document.getElementById(""mobileAppBanner"").style.display = ""none"";
-					if (typeof(Storage) !== ""undefined"") {
-						sessionStorage.setItem(""mobileAppBannerClosed"", true);
-					}
-				}","var onlinecontactscomponent = Vue.component('onlinecontactsv3',
-					{
-						name: 'onlinecontactsv3',
-						template: '#onlinecontacts-v3-template',
-						mixins: [messagedisplayMixin ],
-						data: function()
-						{
-							return {
-								contactid: 0,
-								contactname: '',
-								contactemail: '',
-								showemailcontactmodal: false,
-								shouldshowsendemail: true,
-								loggedin: false,
-								showemailexhibitor: false,
-								emailexhibitorexhid: '',
-								loading: false,
-								exhid: '3457',
-								exhname: 'Gildo Profilati',
-								index: 2
-							}
-						},
-						created()
-						{
-							// Array of exhibitor contacts and their current status
-							this.onlinecontactsdata = [{""zip"":"""",""facebook"":"""",""instagram"":"""",""lname"":""TRABUCCHI"",""phone"":""+39 039 6900353 Ext.2"",""isreguser"":1,""state"":"""",""s3img"":"""",""email"":""ornella@gildo.it"",""contactid"":1137,""published"":1,""exhname"":""Gildo Profilati"",""country"":"""",""description"":"""",""chatid"":""user:^ShowID^-p-[3ED7BB4A-573D-4905-9001-C9BEF9951424]"",""photo"":"""",""address1"":"""",""hasplanner"":0,""validated"":0,""fullname"":""ORNELLA TRABUCCHI"",""address3"":"""",""address2"":"""",""linkedin"":"""",""exhid"":""3457"",""headshot"":"""",""availableforchat"":0,""department"":"""",""regid"":0,""contactstatus"":""Offline"",""fname"":""ORNELLA"",""city"":"""",""publishedsort"":1,""companyname"":""Gildo Profilati"",""title"":""Sales Manager"",""phone2"":"""",""fax"":"""",""ocguid"":"""",""userregid"":190,""twitter"":""""}];
-
-							
-
-							this.loadNotifications();
-						},
-						methods:
-						{
-							openemailcontactmodal: function(contactid, contactname, contactemail)
-							{
-								this.$emit('open-onlinecontacts-email-modal', {contactid: contactid, fullname: contactname, contactemail: contactemail, showemailcontactmodal: true});
-							},
-							handleEmailEvent: function(event){
-								this.openemailcontactmodal(event.contactid, event.fullname, event.contactemail);
-							},
-							showChatWindow: function(event)
-							{
-								if(this.talkingtouserid != event.userid)
-								{
-									this.talkingtouserid = event.userid;
-									this.talkingtousername = event.fullname;
-
-									this.loadMessages(0, this.maxmessagesloaded);
-								}
-							},
-							loadNotifications()
-							{
-								if (this.hasSessionStorage())
-								{
-									this.newnotification = sessionStorage.getItem(""newnotification"") ? true : false;
-								}
-							},
-							removeNotification()
-							{
-								sessionStorage.removeItem(""newnotification"");
-								this.newnotification = false;
-							},
-							favoriteContact(contactindex)
-							{
-								this.onlinecontactsdata[contactindex].hasplanner = 1;
-							}
-						}
-					});",,Contact Us,,,,,No,No,"It was great to learn about Gildo Profilati in the context of ISA Sign Expo 2025. We're impressed with your company's focus and see potential for collaboration. Would you be open to a brief chat?
+Gildo Profilati,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?=3457,https://www.signexpo.org/,"is a family-owned Italian leading company with over 50 years of trim caps manufacturing experience. Gildotrim caps are flexible&durable extruded profiles, made of top quality raw materials as prime aluminium foil and a special polymeric resin. Our products meet all requirements for preventing delamination, shrinkage, scratches and fading over time. Available in a variety of sizes (J/F/arrow types) and 36 color combinations. Easy to form and bend especially round the corners. Customised colour matching is available upon customer's wishes. To learn more about GildoTrim visit gildotrim.com",,,,,Company Information Contact Us About Gildo Profilati Product Categories Production Equipment - Channel Letter Forming Equipment Trade Specific Products - ADA Signage/Architectural Signage,,,,,https://www.linkedin.com/company/gildo-profilati,No,Rationale not extracted by LLM.,No,"It was great to see Gildo Profilati's presence at ISA Sign Expo 2025. Your company's contributions to the signage industry are noteworthy and I was particularly interested in your flexible and durable extruded profiles. I believe there may be potential for collaboration or mutual benefit between our companies. Would you be open to a brief introductory call next week to explore this further? Looking forward to hearing from you.
 
 Best regards,
-As
+Aakanksha
 DuPont Tedlar",incomplete
-Laguna Tools Inc.,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?exhid=1803,https://www.signexpo.org/,"My Planner
-My Profile
-Recommendations
-Sign Out",,"function parse_query_string(query) {
-		        var vars = query.split(""&"");
-		        var query_string = {};
-		        for (var i = 0; i < vars.length; i++) {
-		            var pair = vars[i].split(""="");
-		            var key = decodeURIComponent(pair[0]);
-		            var value = decodeURIComponent(pair[1]);
-
-		            // If first entry with this name
-		            if (typeof query_string[key] === ""undefined"") {
-		                query_string[key] = decodeURIComponent(value);
-		            // If second entry with this name
-		            } else if (typeof query_string[key] === ""string"") {
-		                var arr = [query_string[key], decodeURIComponent(value)];
-		                query_string[key] = arr;
-		            // If third or later entry with this name
-		            } else {
-		                query_string[key].push(decodeURIComponent(value));
-		            }
-		        }
-		        return query_string;
-		    }
-
-		    // handles the language change in includes/_language.cfm
-		    function changeLanguage(languageFormId){
-		    	if (languageFormId === undefined){
-		    		languageFormId = 'mys-langset';
-		    	}
-		    	var query = window.location.search.substring(1);
-		    	var qs;
-
-		    	if (query){
-		    		qs = parse_query_string(query);
-		    		for (var key in qs) {
-		    			var input = document.createElement(""input"");
-
-		    			input.setAttribute(""type"", ""hidden"");
-		    			input.setAttribute(""name"", key);
-		    			input.setAttribute(""value"", qs[key]);
-
-		    			//append to form element that you want .
-		    			document.getElementById(languageFormId).appendChild(input);
-		    		}
-		    	}
-		    	document.getElementById(languageFormId).action = window.location.pathname + window.location.hash;
-		    	document.getElementById(languageFormId).submit();
-		    }
-
-		    var query = window.location.search.substring(1);
-		    var qs;
-
-		    if (query){
-		        qs = parse_query_string(query);
-		    }
-
-		    
-			    function enableAppDownload() {
-			    	if (typeof(Storage) !== ""undefined"" && !sessionStorage.getItem(""mobileAppBannerClosed"")) {
-						var android = /Android/.test(navigator.userAgent);
-				    	// var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-				    	var isChromeForiOS = !!navigator.userAgent.match(/CriOS\/[\d\.]+.*Safari/);
-						var mobileAppBanner = document.getElementById(""mobileAppBanner"");
-						var appDownload = document.getElementById(""appDownloadButton"");
-
-						if (isChromeForiOS) {
-							
-								mobileAppBanner.style.display = ""block"";
-								appDownload.href = ""https://apps.apple.com/us/app/isa-international-sign-expo/id6475792976"";
-							
-						} else if (android) {
-							
-								mobileAppBanner.style.display = ""block"";
-								appDownload.href = ""https://play.google.com/store/apps/details?id=com.mapyourshow.ISASIGNEXPOMobileApp"";
-							
-						}
-					}
-				}
-
-				function closeAppDownload() {
-					document.getElementById(""mobileAppBanner"").style.display = ""none"";
-					if (typeof(Storage) !== ""undefined"") {
-						sessionStorage.setItem(""mobileAppBannerClosed"", true);
-					}
-				}","var onlinecontactscomponent = Vue.component('onlinecontactsv3',
-					{
-						name: 'onlinecontactsv3',
-						template: '#onlinecontacts-v3-template',
-						mixins: [messagedisplayMixin ],
-						data: function()
-						{
-							return {
-								contactid: 0,
-								contactname: '',
-								contactemail: '',
-								showemailcontactmodal: false,
-								shouldshowsendemail: true,
-								loggedin: false,
-								showemailexhibitor: false,
-								emailexhibitorexhid: '',
-								loading: false,
-								exhid: '1803',
-								exhname: 'Laguna Tools Inc.',
-								index: 2
-							}
-						},
-						created()
-						{
-							// Array of exhibitor contacts and their current status
-							this.onlinecontactsdata = [{""zip"":"""",""facebook"":"""",""instagram"":"""",""lname"":""Friesen"",""phone"":"""",""isreguser"":0,""state"":"""",""s3img"":"""",""email"":""Jason_Friesen@lagunatools.com"",""contactid"":1063,""published"":1,""exhname"":""Laguna Tools Inc."",""country"":"""",""description"":"""",""chatid"":""user:^ShowID^-p-[]"",""photo"":"""",""address1"":"""",""hasplanner"":0,""validated"":0,""fullname"":""Jason Friesen"",""address3"":"""",""address2"":"""",""linkedin"":"""",""exhid"":""1803"",""headshot"":"""",""availableforchat"":0,""department"":"""",""regid"":0,""contactstatus"":""Offline"",""fname"":""Jason"",""city"":"""",""publishedsort"":1,""companyname"":""Laguna Tools Inc."",""title"":""North American CNC & Sign Equipment Sales"",""phone2"":"""",""fax"":"""",""ocguid"":"""",""userregid"":0,""twitter"":""""}];
-
-							
-
-							this.loadNotifications();
-						},
-						methods:
-						{
-							openemailcontactmodal: function(contactid, contactname, contactemail)
-							{
-								this.$emit('open-onlinecontacts-email-modal', {contactid: contactid, fullname: contactname, contactemail: contactemail, showemailcontactmodal: true});
-							},
-							handleEmailEvent: function(event){
-								this.openemailcontactmodal(event.contactid, event.fullname, event.contactemail);
-							},
-							showChatWindow: function(event)
-							{
-								if(this.talkingtouserid != event.userid)
-								{
-									this.talkingtouserid = event.userid;
-									this.talkingtousername = event.fullname;
-
-									this.loadMessages(0, this.maxmessagesloaded);
-								}
-							},
-							loadNotifications()
-							{
-								if (this.hasSessionStorage())
-								{
-									this.newnotification = sessionStorage.getItem(""newnotification"") ? true : false;
-								}
-							},
-							removeNotification()
-							{
-								sessionStorage.removeItem(""newnotification"");
-								this.newnotification = false;
-							},
-							favoriteContact(contactindex)
-							{
-								this.onlinecontactsdata[contactindex].hasplanner = 1;
-							}
-						}
-					});",,Contact Us,,,,,No,No,"It was great to learn about Laguna Tools Inc. in the context of ISA Sign Expo 2025. We're impressed with your company's focus and see potential for collaboration. Would you be open to a brief chat?
+Laguna Tools Inc.,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?=1803,https://www.signexpo.org/,"For over four decades, Laguna Tools has been a pioneer in the machinery industry, delivering innovative solutions that empower artisans, craftsmen, and businesses to achieve unparalleled precision and efficiency. Founded in 1983, Laguna Tools has consistently pushed the boundaries of technology, ensuring that our customers have access to state-of-the-art equipment designed to meet the evolving demands of various industries. A Legacy of Innovation Laguna Tools' journey began with a commitment to revolutionizing machinery solutions. Over the years, this dedication to innovation has expanded to encompass a diverse range of machinery, including CNC routers, CO2 lasers, fiber lasers, plasma cutters, and more. Our products are meticulously engineered to provide superior performance, reliability, and versatility, catering to both small businesses and large-scale industrial operations. Sign Making Expertise One of the standout applications of Laguna Tools' machinery is in the sign-making industry. Recognizing the unique challenges faced by sign makers, we have developed a suite of equipment specifically tailored to meet the intricate demands of this craft. Precision CNC Routers Our CNC routers are renowned for their precision and adaptability, making them indispensable tools for sign makers. Models such as the SmartShop® Series are equipped with robust features, including high-speed spindles and advanced control systems, enabling users to execute intricate designs with ease. These routers can handle a variety of materials commonly used in sign making, such as wood, acrylic, plastics, and non-ferrous metals, ensuring that artisans can bring their creative visions to life with impeccable accuracy. Versatile CO2 Lasers Laguna Tools' CO2 laser cutters offer unparalleled versatility for sign makers. These machines are capable of cutting, engraving, and etching a wide array of materials, including acrylic, wood, leather, and certain plastics. The precision of our CO2 lasers allows for the creation of detailed graphics, text, and intricate patterns, making them ideal for producing high-quality, custom signage that stands out in any setting. Comprehensive Tooling Kits Understanding that the right tools are essential for optimal results, Laguna Tools offers specialized tooling kits designed for sign making. Our Sign Maker Tooling Kit includes a selection of router bits and accessories specifically chosen to enhance the capabilities of our CNC routers. This kit ensures that users have everything they need to tackle a wide range of sign-making projects, from simple cutouts to complex 3D carvings. Customer-Centric Approach At Laguna Tools, our commitment to customer satisfaction extends beyond providing top-tier machinery. We offer comprehensive support services, including maintenance programs, warranty registration, and blade resharpening services, ensuring that our customers' equipment remains in optimal condition. Our knowledgeable support staff is always ready to assist with any questions or challenges, fostering a community of innovation and excellence. Experience the Laguna Difference Whether you're a seasoned professional or just beginning your journey in sign making, Laguna Tools provides the equipment, support, and expertise to help you succeed. Explore our range of CNC machines, laser cutters, and specialized tooling kits to discover how we can elevate your craft and bring your creative visions to life.",,,,,"Company Information Contact Us About Laguna Tools Inc. Product Categories Consumables - Fabric & Textiles Consumables - Substrates Rigid Consumables - Vinyl (self-adhesive, banner, etc.) Production Equipment - Channel Letter Forming Equipment Production Equipment - Laser Cutters/Engravers Production Equipment - Routers Services - Training and Education Trade Specific Products - ADA Signage/Architectural Signage Trade Specific Products - Plaques/Engraving",,,,,https://www.linkedin.com/company/lagunatools,Yes,Rationale not extracted by LLM.,Yes,"It was great to see Laguna Tools Inc.'s presence at ISA Sign Expo 2025. Your company's contributions to the signage industry are noteworthy. I was particularly interested in your focus on empowering artisans, craftsmen, and businesses to achieve unparalleled precision. As an expert in sales development, I believe there could be potential for collaboration or mutual benefit between our companies. Would you be open to a brief introductory call next week to explore this further? Looking forward to hearing back from you.
 
 Best regards,
-As
+Aakanksha
 DuPont Tedlar",incomplete
-Principal Industries,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?exhid=622,https://www.signexpo.org/,"My Planner
-My Profile
-Recommendations
-Sign Out",,"function parse_query_string(query) {
-		        var vars = query.split(""&"");
-		        var query_string = {};
-		        for (var i = 0; i < vars.length; i++) {
-		            var pair = vars[i].split(""="");
-		            var key = decodeURIComponent(pair[0]);
-		            var value = decodeURIComponent(pair[1]);
-
-		            // If first entry with this name
-		            if (typeof query_string[key] === ""undefined"") {
-		                query_string[key] = decodeURIComponent(value);
-		            // If second entry with this name
-		            } else if (typeof query_string[key] === ""string"") {
-		                var arr = [query_string[key], decodeURIComponent(value)];
-		                query_string[key] = arr;
-		            // If third or later entry with this name
-		            } else {
-		                query_string[key].push(decodeURIComponent(value));
-		            }
-		        }
-		        return query_string;
-		    }
-
-		    // handles the language change in includes/_language.cfm
-		    function changeLanguage(languageFormId){
-		    	if (languageFormId === undefined){
-		    		languageFormId = 'mys-langset';
-		    	}
-		    	var query = window.location.search.substring(1);
-		    	var qs;
-
-		    	if (query){
-		    		qs = parse_query_string(query);
-		    		for (var key in qs) {
-		    			var input = document.createElement(""input"");
-
-		    			input.setAttribute(""type"", ""hidden"");
-		    			input.setAttribute(""name"", key);
-		    			input.setAttribute(""value"", qs[key]);
-
-		    			//append to form element that you want .
-		    			document.getElementById(languageFormId).appendChild(input);
-		    		}
-		    	}
-		    	document.getElementById(languageFormId).action = window.location.pathname + window.location.hash;
-		    	document.getElementById(languageFormId).submit();
-		    }
-
-		    var query = window.location.search.substring(1);
-		    var qs;
-
-		    if (query){
-		        qs = parse_query_string(query);
-		    }
-
-		    
-			    function enableAppDownload() {
-			    	if (typeof(Storage) !== ""undefined"" && !sessionStorage.getItem(""mobileAppBannerClosed"")) {
-						var android = /Android/.test(navigator.userAgent);
-				    	// var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-				    	var isChromeForiOS = !!navigator.userAgent.match(/CriOS\/[\d\.]+.*Safari/);
-						var mobileAppBanner = document.getElementById(""mobileAppBanner"");
-						var appDownload = document.getElementById(""appDownloadButton"");
-
-						if (isChromeForiOS) {
-							
-								mobileAppBanner.style.display = ""block"";
-								appDownload.href = ""https://apps.apple.com/us/app/isa-international-sign-expo/id6475792976"";
-							
-						} else if (android) {
-							
-								mobileAppBanner.style.display = ""block"";
-								appDownload.href = ""https://play.google.com/store/apps/details?id=com.mapyourshow.ISASIGNEXPOMobileApp"";
-							
-						}
-					}
-				}
-
-				function closeAppDownload() {
-					document.getElementById(""mobileAppBanner"").style.display = ""none"";
-					if (typeof(Storage) !== ""undefined"") {
-						sessionStorage.setItem(""mobileAppBannerClosed"", true);
-					}
-				}",,,,,,,,Yes,Yes,"It was great to learn about Principal Industries in the context of ISA Sign Expo 2025. We're impressed with your company's focus and see potential for collaboration. Would you be open to a brief chat?
+Principal Industries,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?=622,https://www.signexpo.org/,"is a leading provider of electrical components, services, and software to the signage and architectural lighting industry, serving a diverse range of commercial end users, including retail, petroleum, quick-serve restaurants, banking, and automotive.",,,,,,,,,,https://au.linkedin.com/company/principal-industries,Yes,Rationale not extracted by LLM.,Yes,"It was great to see Principal Industries's presence at ISA Sign Expo 2025. Your company's specific focus on providing electrical components, services, and software to the signage and architectural lighting industry caught my attention. Your contributions to this industry are noteworthy and I was impressed by the innovations showcased by companies like yours at the event. I believe there may be potential for collaboration or mutual benefit between our companies. Would you be open to a brief introductory call next week to explore this further? Looking forward to hearing from you.
 
 Best regards,
-As
+Aakanksha
 DuPont Tedlar",incomplete
-Signage Details,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?exhid=4990,https://www.signexpo.org/,"My Planner
-My Profile
-Recommendations
-Sign Out",,"function parse_query_string(query) {
-		        var vars = query.split(""&"");
-		        var query_string = {};
-		        for (var i = 0; i < vars.length; i++) {
-		            var pair = vars[i].split(""="");
-		            var key = decodeURIComponent(pair[0]);
-		            var value = decodeURIComponent(pair[1]);
-
-		            // If first entry with this name
-		            if (typeof query_string[key] === ""undefined"") {
-		                query_string[key] = decodeURIComponent(value);
-		            // If second entry with this name
-		            } else if (typeof query_string[key] === ""string"") {
-		                var arr = [query_string[key], decodeURIComponent(value)];
-		                query_string[key] = arr;
-		            // If third or later entry with this name
-		            } else {
-		                query_string[key].push(decodeURIComponent(value));
-		            }
-		        }
-		        return query_string;
-		    }
-
-		    // handles the language change in includes/_language.cfm
-		    function changeLanguage(languageFormId){
-		    	if (languageFormId === undefined){
-		    		languageFormId = 'mys-langset';
-		    	}
-		    	var query = window.location.search.substring(1);
-		    	var qs;
-
-		    	if (query){
-		    		qs = parse_query_string(query);
-		    		for (var key in qs) {
-		    			var input = document.createElement(""input"");
-
-		    			input.setAttribute(""type"", ""hidden"");
-		    			input.setAttribute(""name"", key);
-		    			input.setAttribute(""value"", qs[key]);
-
-		    			//append to form element that you want .
-		    			document.getElementById(languageFormId).appendChild(input);
-		    		}
-		    	}
-		    	document.getElementById(languageFormId).action = window.location.pathname + window.location.hash;
-		    	document.getElementById(languageFormId).submit();
-		    }
-
-		    var query = window.location.search.substring(1);
-		    var qs;
-
-		    if (query){
-		        qs = parse_query_string(query);
-		    }
-
-		    
-			    function enableAppDownload() {
-			    	if (typeof(Storage) !== ""undefined"" && !sessionStorage.getItem(""mobileAppBannerClosed"")) {
-						var android = /Android/.test(navigator.userAgent);
-				    	// var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-				    	var isChromeForiOS = !!navigator.userAgent.match(/CriOS\/[\d\.]+.*Safari/);
-						var mobileAppBanner = document.getElementById(""mobileAppBanner"");
-						var appDownload = document.getElementById(""appDownloadButton"");
-
-						if (isChromeForiOS) {
-							
-								mobileAppBanner.style.display = ""block"";
-								appDownload.href = ""https://apps.apple.com/us/app/isa-international-sign-expo/id6475792976"";
-							
-						} else if (android) {
-							
-								mobileAppBanner.style.display = ""block"";
-								appDownload.href = ""https://play.google.com/store/apps/details?id=com.mapyourshow.ISASIGNEXPOMobileApp"";
-							
-						}
-					}
-				}
-
-				function closeAppDownload() {
-					document.getElementById(""mobileAppBanner"").style.display = ""none"";
-					if (typeof(Storage) !== ""undefined"") {
-						sessionStorage.setItem(""mobileAppBannerClosed"", true);
-					}
-				}","var onlinecontactscomponent = Vue.component('onlinecontactsv3',
-					{
-						name: 'onlinecontactsv3',
-						template: '#onlinecontacts-v3-template',
-						mixins: [messagedisplayMixin ],
-						data: function()
-						{
-							return {
-								contactid: 0,
-								contactname: '',
-								contactemail: '',
-								showemailcontactmodal: false,
-								shouldshowsendemail: true,
-								loggedin: false,
-								showemailexhibitor: false,
-								emailexhibitorexhid: '',
-								loading: false,
-								exhid: '4990',
-								exhname: 'Signage Details',
-								index: 2
-							}
-						},
-						created()
-						{
-							// Array of exhibitor contacts and their current status
-							this.onlinecontactsdata = [{""zip"":"""",""facebook"":""https://www.facebook.com/signagedetails/"",""instagram"":""https://www.instagram.com/signagedetails/"",""lname"":""Nauta"",""phone"":""562-841-9153"",""isreguser"":1,""state"":"""",""s3img"":""https://d3fv3oe83qat1b.cloudfront.net/eyJlZGl0cyI6eyJyZXNpemUiOnsiZml0IjoiY292ZXIiLCJ3aWR0aCI6MTMwLjAsImhlaWdodCI6MTMwLjB9fSwiYnVja2V0IjoibXlzLXNob3dmaWxlcyIsImtleSI6InByb2R1Y3Rpb24vaXNhc2lnbmV4cG8yMDI1L29ubGluZV9jb250YWN0X2hlYWRzaG90cy80OTkwL0FDQkI3RTM4LUUwRkEtQjNGRC1CQkI0QjUzQjg5MTE1MjlFLnBuZyJ9"",""email"":""john@signagedetails.com"",""contactid"":10,""published"":1,""exhname"":""Signage Details"",""country"":"""",""description"":""<p>Electrical Sign Design Innovator<br><br>John Nauta began his career in the sign industry over 25 years ago. His ability to quickly master CorelDRAW and develop a deep understanding of sign fabrication and installation methods enabled him to rapidly advance from production designer to Design Director. Despite his team’s extensive experience in creating section install details, John noticed that significant time was wasted each month searching for files and modifying wall types, attachment methods, electrical provisions, and sign types. This insight led him to develop SignageDetails.com.<br><br>In 2021, John founded Signage Details, an online subscription service designed to be the ultimate resource hub for sign companies worldwide. Their exclusive, patent-pending, intuitive Select-A-Sign tool allows users to create comprehensive section details for fabricating and installing commercial signs and integrate them into their plans in as little as 60 seconds, regardless of the design program used.</p>"",""chatid"":""user:^ShowID^-p-[B5A42B46-37A5-4E0B-BA6F-869C3FC22E5E]"",""photo"":"""",""address1"":"""",""hasplanner"":0,""validated"":0,""fullname"":""John Nauta"",""address3"":"""",""address2"":"""",""linkedin"":""https://www.linkedin.com/company/signagedetails/"",""exhid"":""4990"",""headshot"":""ACBB7E38-E0FA-B3FD-BBB4B53B8911529E.png"",""availableforchat"":0,""department"":"""",""regid"":0,""contactstatus"":""Offline"",""fname"":""John"",""city"":"""",""publishedsort"":1,""companyname"":""Signage Details"",""title"":""Owner"",""phone2"":"""",""fax"":"""",""ocguid"":"""",""userregid"":141,""twitter"":""""}];
-
-							
-
-							this.loadNotifications();
-						},
-						methods:
-						{
-							openemailcontactmodal: function(contactid, contactname, contactemail)
-							{
-								this.$emit('open-onlinecontacts-email-modal', {contactid: contactid, fullname: contactname, contactemail: contactemail, showemailcontactmodal: true});
-							},
-							handleEmailEvent: function(event){
-								this.openemailcontactmodal(event.contactid, event.fullname, event.contactemail);
-							},
-							showChatWindow: function(event)
-							{
-								if(this.talkingtouserid != event.userid)
-								{
-									this.talkingtouserid = event.userid;
-									this.talkingtousername = event.fullname;
-
-									this.loadMessages(0, this.maxmessagesloaded);
-								}
-							},
-							loadNotifications()
-							{
-								if (this.hasSessionStorage())
-								{
-									this.newnotification = sessionStorage.getItem(""newnotification"") ? true : false;
-								}
-							},
-							removeNotification()
-							{
-								sessionStorage.removeItem(""newnotification"");
-								this.newnotification = false;
-							},
-							favoriteContact(contactindex)
-							{
-								this.onlinecontactsdata[contactindex].hasplanner = 1;
-							}
-						}
-					});",,Contact Us,,,,,Yes,Yes,"It was great to learn about Signage Details in the context of ISA Sign Expo 2025. We're impressed with your company's focus and see potential for collaboration. Would you be open to a brief chat?
+Signage Details,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?=4990,https://www.signexpo.org/,"Subscribe today for unlimited access to proven, industry-standard, permit-ready section details for fabricating and installing commercial signs. With our exclusive, patent-pending, intuitive Select-A-Sign tool, you can seamlessly design and integrate comprehensive details into your plans in as little as 60 seconds—no matter which design software you use. Beyond wall signs, our details extend to monument signs, featuring interior cabinet framing, saddle connections to steel pipes, and preliminary footing details. We also offer a variety of additional resources, such as field survey sheets, permit drawing templates, blocking details, and more.",,,,,Company Information Contact Us About Signage Details Product Categories Services - Coaching/Consulting Services - Engineering Services - Installation Services - Permitting Software - Graphic Design Software - Workflow Trade Specific Products - ADA Signage/Architectural Signage Collateral Special Offers,,,,,https://www.linkedin.com/company/signs-com,Yes,Rationale not extracted by LLM.,Yes,"It was great to see Signage Details's presence at ISA Sign Expo 2025. Your company's contributions to the signage industry are noteworthy. I was particularly interested in your focus on providing unlimited access to proven, industry-standard, permit-ready section details for fabricating and installing commercial signs. As a Sales Development Representative, I see potential for collaboration and mutual benefit between our companies. Would you be open to a brief introductory call next week to explore this further? Looking forward to hearing from you.
 
 Best regards,
-As
+Aakanksha
+DuPont Tedlar",incomplete
+3M Commercial Solutions,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?=1092,https://www.signexpo.org/,"3M Commercial Graphics helps customers worldwide build brands by providing total large-format graphics and light management solutions. 3M manufactures or certifies lighting solutions, graphic films and graphic protection, flexible substrates as well as inks and toners used to create large-format finished graphics that are consistent, reliable, and durable. Follow @3Mfilms on your favorite social media platforms to stay connected with the 3M Graphics Community.",,,,,,,,,,https://www.linkedin.com/company/3m,Yes,Rationale not extracted by LLM.,Yes,"It was great to see 3M Commercial Solutions's presence at ISA Sign Expo 2025. Your company's focus on providing total large-format graphics and light management solutions is truly impressive. As a Sales Development Representative, I am always on the lookout for potential collaborations and I believe our companies could benefit from each other's expertise. Would you be open to a brief introductory call next week to explore this further? Looking forward to connecting with you.
+
+Best regards,
+Aakanksha
+DuPont Tedlar",incomplete
+4Ever Products,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?=1462,https://www.signexpo.org/,The sign industry's leader in Vinyl & Aluminum sign frames. Our products include: - Post & Panel Frames - Architectural Frames - Ornamental/Decorative Street Sign Systems - Real Estate Posts and More...,,,,,,,,,,https://www.linkedin.com/company/4ever-products,No,Rationale not extracted by LLM.,No,"It was great to see 4Ever Products's presence at ISA Sign Expo 2025. Your company's focus on being the leader in Vinyl & Aluminum sign frames is impressive. We were particularly interested in your Post & Panel Frames, Architectural Frames, and Real Estate Posts. Your contributions to the signage industry are noteworthy. We believe there may be potential for collaboration or mutual benefit between our companies. Would you be open to a brief introductory call next week to explore this further? Looking forward to hearing from you.
+
+Best regards,
+Aakanksha
+DuPont Tedlar",incomplete
+A.R.K. Ramos Foundry & Mfg. Co.,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?=1108,https://www.signexpo.org/,"A.R.K. Ramos manufactures cast and etched aluminum, brass, and bronze plaques. We also produce cast letters, cut graphics, and reverse channel letters in a variety of metals including aluminum, brass, bronze, and stainless steel. We have been serving the international sign market for 76 years.",,,,,Company Information Contact Us About A.R.K. Ramos Foundry & Mfg. Co. Product Categories Trade Specific Products - ADA Signage/Architectural Signage Trade Specific Products - Plaques/Engraving Trade Specific Products - Wholesale Fabrication Collateral,,,,,https://www.linkedin.com/company/a-r-k--ramos-foundry-&-manufacturing-company-inc-,No,Rationale not extracted by LLM.,No,"""It was great to see A.R.K. Ramos Foundry & Mfg. Co.'s presence at ISA Sign Expo 2025. Your company's contributions to the signage industry are noteworthy, and I was particularly interested in your focus on manufacturing cast and etched aluminum, brass, and bronze plaques. As a Sales Development Representative, I am always looking for potential collaborations and mutual benefits. Would you be open to a brief introductory call next week to explore this further? Looking forward to hearing from you.""
+
+Best regards,
+Aakanksha
+DuPont Tedlar",incomplete
+Aludecor,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?=5170,https://www.signexpo.org/,"India's leading manufacturer of Metal Composite Panels, has been a trendsetter in bringing and creating unique product offerings for the past 20 years. Headquartered in Kolkata, has remained a premium ACP sheet manufacturer in India, synonymous with trust and reliability. Metal Composite Panel is the preferred choice of Architects, Facade consultants, and Space Designers along with other valued patrons of the Industry. With a passion for innovation, has maintained its stature in the Indian ACP Manufacturing Industry as a Thought Leader. The Company’s end-to-end Metal Composite Panel Manufacturing portfolio is powered by a 500+ strong retail network. A presence in more than 250 cities and world-class Manufacturing Units spread across 37500 square meters in Haridwar empowers to keep on introducing breakthrough products that have been creating benchmarks in the market for the past 20 years. Serving more than 200+ customers including Govt. & Corporates like Indian Railways, IOCL, BPCL, Tata Steels, Kia Motors, Maruti Suzuki to name a few",,,,,"Company Information Contact Us About Aludecor Product Categories Consumables - Laminates Consumables - Vinyl (self-adhesive, banner, etc.) Printers - 3D Printers - Screen Printing Production Equipment - Laser Cutters/Engravers Software - Graphic Design Trade Specific Products - ADA Signage/Architectural Signage Trade Specific Products - Digital/LED Signs Trade Specific Products - Pre-Fabricated Signs Collateral",,,,,https://in.linkedin.com/company/aludecor-lamination-pvt-ltd-,Yes,"Aludecor specializes in architectural graphics and has a strong presence in the signage industry. They also have a large global revenue and exhibit at industry events, indicating they are active in the industry. Additionally, their customers include large corporations, suggesting they have decision-makers such as VPs of Product Development and Directors of Innovation.",Yes,"Hi there,
+
+It was great to see Aludecor's presence at ISA Sign Expo 2025. I was particularly interested in your company's focus on being India's leading manufacturer of Metal Composite Panels and your commitment to innovation over the past 20 years. Your contributions to the signage industry are noteworthy and I can see potential for collaboration between our companies.
+
+Would you be open to a brief introductory call next week to explore this further? I'd be happy to share a few ideas on how we might collaborate if you're available for a quick chat.
+
+Looking forward to hearing from you.
+
+Best regards,
+
+Aakanksha
+
+Best regards,
+Aakanksha
+DuPont Tedlar",incomplete
+"Anhui Angran Green Technology Co.,Ltd.",https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?=5211,https://www.signexpo.org/,"Anhui Angran Green Technology Co., Ltd. is a global leader in self-luminous safety signs and identification products. The company holds over 40 utility model patents, more than 10 invention patents, and a 'CCC' certificate for fire safety products. It's a national high-tech enterprise with the Hefei Municipal Industrial Design Center title, AAA credit ratings, and certifications for quality and environmental management. Since 2016, Angran has expanded into international markets, exporting to the US, Canada, New Zealand, Australia, Norway, Japan, Germany, the UK, and Saudi Arabia, offering comprehensive services from consultation and product development to maintenance.",,,,,"Company Information Contact Us About Anhui Angran Green Technology Co.,Ltd. Product Categories Consumables - Adhesives Consumables - Ink Consumables - Lighting Consumables - Vinyl (self-adhesive, banner, etc.) Printers - Screen Printing Printers - UV Trade Specific Products - ADA Signage/Architectural Signage Trade Specific Products - Pre-Fabricated Signs Trade Specific Products - Wholesale Fabrication",,,,,https://www.linkedin.com/company/aristotle,No,Rationale not extracted by LLM.,No,"It was great to see Anhui Angran Green Technology Co.,Ltd.'s presence at ISA Sign Expo 2025. Your company's contributions to the signage industry are noteworthy. I was particularly interested in your focus on self-luminous safety signs and identification products, as well as your impressive number of patents. I believe there may be potential for collaboration or mutual benefit between our companies. Would you be open to a brief introductory call next week to explore this further? Looking forward to your response.
+
+Best regards,
+Aakanksha
+DuPont Tedlar",incomplete
+"AnyLux Co, Ltd",https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?=1292,https://www.signexpo.org/,"Anylux Co.,Ltd is manufacturing LED Module from 2011 in Korea. Anylux LED Module is UL approved. Product is applied various application for singage lighting, architecture, sclupture, indoor or outdoor lighting and etc. Anylux Co.,Ltd always try to do our best to be a stable brand and to have a reliable partnership with clients.",,,,,"Company Information Contact Us About AnyLux Co, Ltd Product Categories Consumables - Lighting Trade Specific Products - ADA Signage/Architectural Signage Trade Specific Products - Digital/LED Signs",,,,,https://uk.linkedin.com/company/clarityled,Yes,"The company specializes in large-format signage and architectural graphics, and their product is applied for various signage and lighting purposes. They also exhibit at ISA Sign Expo and are active in industry associations, indicating a focus on the signage industry. Additionally, their product is UL approved, which aligns with the ICP's focus on quality and innovation.",Yes,"It was great to see AnyLux Co, Ltd's presence at ISA Sign Expo 2025. Your company's contributions to the signage industry are noteworthy. I was particularly interested in your focus on manufacturing UL approved LED modules for various applications. As a Sales Development Representative, I see potential for collaboration and mutual benefit between our companies. Would you be open to a brief introductory call next week to explore this further? Looking forward to hearing from you.
+
+Best regards,
+Aakanksha
+DuPont Tedlar",incomplete
+Arter Neon Sign Inc,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?=5253,https://www.signexpo.org/,"Arter Neon Sign has been producing neon and LED signs for businesses, homes, and events since 1993. All of the signs are manufactured in the United States",,,,,,,,,,https://www.linkedin.com/company/innovative-signs,No,Rationale not extracted by LLM.,No,"It was great to see Arter Neon Sign Inc's presence at ISA Sign Expo 2025. Your company's contributions to the signage industry are noteworthy, and I was particularly interested in your focus on producing neon and LED signs for businesses, homes, and events since 1993. As an expert Sales Development Representative, I see potential for collaboration and mutual benefit between our companies. Would you be open to a brief introductory call next week to explore this further? Looking forward to hearing from you.
+
+Best regards,
+Aakanksha
+DuPont Tedlar",incomplete
+"Aurora Science and Technology Co., Ltd",https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?=3362,https://www.signexpo.org/,"Aurora has been specialized in corporate image and shop fixture/elements design, production and installation for advertisement signage over 16 years. We are offering package services including design, fabrication, engineering, project management and after-sale service to our clients with famous brand in domestic and overseas markets. I joined Aurora in 2013 and now one of the shareholders. Our long-term clients mainly include Nike, McDonald's, Starbucks, Victoria's Secret, Converse, Jordan, etc.",,,,,"Company Information Contact Us About Aurora Science and Technology Co., Ltd Product Categories Trade Specific Products - ADA Signage/Architectural Signage",,,,,https://www.linkedin.com/company/aurora-signage,Yes,Rationale not extracted by LLM.,Yes,"Hi there,
+
+It was great to see Aurora Science and Technology Co., Ltd's presence at ISA Sign Expo 2025. I was particularly interested in your company's specialization in corporate image and shop fixture/elements design, production, and installation for advertisement signage. Your contributions to the signage industry are noteworthy.
+
+I believe there is potential for collaboration between our companies, and I would love to explore this further. Would you be open to a brief introductory call next week to discuss potential opportunities? 
+
+Looking forward to hearing back from you.
+
+Best regards,
+Aakanksha
+
+Best regards,
+Aakanksha
+DuPont Tedlar",incomplete
+Avery Dennison Graphics Solutions,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?=1105,https://www.signexpo.org/,"Avery Dennison offers you and your customers limitless ways to reinvigorate brands. Regardless of the application or surface, Avery Dennison provides films that will impress with print quality and color and install with ease. From digitally printable and pressure sensitive craft vinyl to window films and over 100 colors of vehicle wrapping films, Avery Dennison has an option to bring your project to life.",,,,,"Company Information Contact Us About Avery Dennison Graphics Solutions Product Categories Consumables - Adhesives Consumables - Laminates Consumables - Vinyl (self-adhesive, banner, etc.) Services - Installation Services - Training and Education Trade Specific Products - ADA Signage/Architectural Signage",,,,,https://www.linkedin.com/company/avery-dennison-graphics-solutions,Yes,Rationale not extracted by LLM.,Yes,"Hello,
+
+I hope this email finds you well. It was great to see Avery Dennison Graphics Solutions's presence at ISA Sign Expo 2025. Your company's contributions to the signage industry are noteworthy.
+
+I was particularly interested in your focus on offering limitless ways to reinvigorate brands through high-quality films. As a Sales Development Representative, I believe there may be potential for collaboration or mutual benefit between our companies.
+
+Would you be open to a brief introductory call next week to explore this further? I'd be happy to share a few ideas on how we might collaborate if you're available for a quick chat.
+
+Looking forward to your response.
+
+Best regards,
+Aakanksha
+
+Best regards,
+Aakanksha
+DuPont Tedlar",incomplete
+Awning and Sign Contractors,https://isasignexpo2025.mapyourshow.com/8_0/exhibitor/exhibitor-details.cfm?=5204,https://www.signexpo.org/,"ASC is a full-service project management company specializing in the manufacture of fabric awnings, architectural canopies, signage, patio railing, standing seam awnings, and various other custom fabric and metal products. With two strategically located manufacturing facilities, we manage projects in all 50 states and the Caribbean. Our two facilities in Angola, IN, and Edgewater, FL, are not just locations, but centers of quality. They provide us with unlimited reach to service national, regional, and local projects. Our unwavering priority is to provide the best products and services at competitive pricing, ensuring that we help maximize brand identity and enhance the overall aesthetics of our clients' buildings and storefronts. Our project management capabilities include, but are not limited to, site surveys, code research, permit procurement, delivery, installation, graphic design, drafting, and engineering.",,,,,Company Information Contact Us About Awning and Sign Contractors Product Categories Services - Installation Services - Permitting Services - Project Management Trade Specific Products - ADA Signage/Architectural Signage Trade Specific Products - Wholesale Fabrication,,,,,https://www.linkedin.com/company/awning-sign-contractors,Yes,Rationale not extracted by LLM.,Yes,"Hi there,
+
+It was great to see Awning and Sign Contractors's presence at ISA Sign Expo 2025. I was particularly interested in your company's focus on fabric awnings, architectural canopies, and custom fabrications. Your contributions to the signage industry are noteworthy and we were impressed by the innovations showcased by companies like yours at the event.
+
+I believe there could be potential for collaboration or mutual benefit between our companies. Would you be open to a brief introductory call next week to explore this further? I'd be happy to share a few ideas on how we might work together.
+
+Looking forward to hearing back from you.
+
+Best regards,
+Aakanksha
+
+Best regards,
+Aakanksha
 DuPont Tedlar",incomplete
